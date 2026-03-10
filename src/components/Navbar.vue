@@ -20,6 +20,25 @@
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg>
         </span>
       </div>
+      <!-- Wedding profile summary + countdown -->
+      <div class="hidden md:flex items-center gap-2 min-w-0">
+        <router-link
+          v-if="weddingProfile"
+          to="/settings/profile"
+          class="flex items-center gap-2 rounded-xl border border-rose-100/80 bg-gradient-to-r from-rose-50/80 to-gold-50/50 px-3 py-2 text-sm transition-all duration-200 hover:border-rose-200 hover:shadow-soft min-w-0"
+        >
+          <span class="hidden lg:inline truncate text-wmis-text font-medium">{{ weddingSummary }}</span>
+          <span class="flex-shrink-0 text-gray-500">·</span>
+          <WeddingCountdown :date="weddingProfile.wedding_date" :show-hours="false" :compact="true" />
+        </router-link>
+        <router-link
+          v-else
+          to="/settings/profile"
+          class="rounded-xl border border-dashed border-rose-200 bg-rose-50/40 px-3 py-2 text-sm text-rose-600 hover:bg-rose-50 transition-all"
+        >
+          Set wedding date
+        </router-link>
+      </div>
     </div>
     <div class="flex shrink-0 items-center gap-1 sm:gap-2">
       <div ref="notifRef" class="relative">
@@ -53,8 +72,8 @@
           class="flex items-center gap-2 rounded-full border border-rose-100 bg-rose-50/40 px-2.5 py-1.5 text-sm transition-all duration-300 hover:bg-rose-50 hover:border-rose-200 min-w-0"
           @click.stop="showProfile = !showProfile; showNotifications = false"
         >
-          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-rose-600 text-sm font-semibold text-white shadow-soft">A</span>
-          <span class="hidden text-gray-700 md:inline truncate">Profile</span>
+          <span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-rose-500 to-rose-600 text-sm font-semibold text-white shadow-soft">{{ userInitial }}</span>
+          <span class="hidden text-gray-700 md:inline truncate">{{ displayName }}</span>
           <svg class="h-4 w-4 shrink-0 text-gray-400 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
         </button>
         <div
@@ -64,7 +83,7 @@
         >
           <router-link to="/settings/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50/50">Wedding Profile</router-link>
           <router-link to="/settings/system" class="block px-4 py-2 text-sm text-gray-700 hover:bg-rose-50/50">Settings</router-link>
-          <button type="button" class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-rose-50/50">Sign out</button>
+          <button type="button" class="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-rose-50/50" @click="handleSignOut">Sign out</button>
         </div>
       </div>
     </div>
@@ -72,9 +91,49 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { useRouter } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
+import { useWeddingProfileStore } from '@/stores/weddingProfile'
+import WeddingCountdown from '@/components/WeddingCountdown.vue'
 
 defineEmits(['toggle-sidebar'])
+
+const router = useRouter()
+const { user, logout } = useAuth()
+const weddingStore = useWeddingProfileStore()
+
+const weddingProfile = computed(() => weddingStore.profile)
+const weddingSummary = computed(() => {
+  const p = weddingProfile.value
+  if (!p) return ''
+  const bride = (p.bride_name || '').trim()
+  const groom = (p.groom_name || '').trim()
+  if (bride && groom) return `${bride} & ${groom}`
+  if (bride) return bride
+  if (groom) return groom
+  return 'Our wedding'
+})
+
+const userInitial = computed(() => {
+  const p = user.value
+  if (!p) return 'A'
+  const name = [p.firstname, p.lastname].filter(Boolean).join(' ').trim() || p.email
+  if (name) return name.slice(0, 1).toUpperCase()
+  return 'A'
+})
+
+const displayName = computed(() => {
+  const p = user.value
+  if (!p) return 'Profile'
+  return [p.firstname, p.lastname].filter(Boolean).join(' ').trim() || p.email || 'Profile'
+})
+
+function handleSignOut() {
+  logout()
+  showProfile.value = false
+  router.push('/login')
+}
 
 const searchQuery = ref('')
 const showNotifications = ref(false)

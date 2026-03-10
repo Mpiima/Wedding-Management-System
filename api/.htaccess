@@ -1,0 +1,6 @@
+# Pass Authorization header to PHP (required for Bearer token auth from SPA)
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP:Authorization} .+
+    RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+</IfModule>

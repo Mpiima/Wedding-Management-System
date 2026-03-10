@@ -77,6 +77,7 @@ const menuGroups = [
       { name: 'Members', to: '/members', icon: '👥' },
       { name: 'Group Category', to: '/group-category', icon: '📁' },
       { name: 'Roles', to: '/roles', icon: '🧩' },
+      { name: 'Committee', to: '/committee', icon: '🏛️' },
       { name: 'Invited Guests', to: '/guests', icon: '👫' }
     ]
   },

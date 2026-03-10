@@ -21,7 +21,9 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onMounted } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { useWeddingProfileStore } from '@/stores/weddingProfile'
 import Sidebar from '@/components/Sidebar.vue'
 import Navbar from '@/components/Navbar.vue'
 
@@ -29,6 +31,13 @@ const sidebarOpen = ref(false)
 
 watch(sidebarOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
+})
+
+onMounted(() => {
+  const authStore = useAuthStore()
+  if (authStore.isAuthenticated) {
+    useWeddingProfileStore().fetchWeddingProfile().catch(() => {})
+  }
 })
 </script>
 
