@@ -17,28 +17,51 @@
         </Transition>
       </main>
     </div>
+    <LockScreen v-if="locked" @unlock="handleUnlock" />
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue'
+import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useWeddingProfileStore } from '@/stores/weddingProfile'
+import { useIdleLock } from '@/composables/useIdleLock'
 import Sidebar from '@/components/Sidebar.vue'
 import Navbar from '@/components/Navbar.vue'
+import LockScreen from '@/components/LockScreen.vue'
 
 const sidebarOpen = ref(false)
+const authStore = useAuthStore()
+const locked = ref(false)
+const { start: startIdle, stop: stopIdle, reset: resetIdle } = useIdleLock(() => {
+  locked.value = true
+})
+
+function handleUnlock() {
+  locked.value = false
+  resetIdle()
+}
+
+watch(() => authStore.isAuthenticated, (isAuth) => {
+  if (isAuth) {
+    startIdle()
+  } else {
+    stopIdle()
+    locked.value = false
+  }
+}, { immediate: true })
 
 watch(sidebarOpen, (open) => {
   document.body.style.overflow = open ? 'hidden' : ''
 })
 
 onMounted(() => {
-  const authStore = useAuthStore()
+  if (authStore.isAuthenticated) startIdle()
   if (authStore.isAuthenticated) {
     useWeddingProfileStore().fetchWeddingProfile().catch(() => {})
   }
 })
+onUnmounted(() => stopIdle())
 </script>
 
 <style scoped>

@@ -18,16 +18,27 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
     case 'GET':
-        getWeddingProfile($dbh, $userId);
+        getWeddingProfile($dbh, $scopeUserId);
         break;
     case 'POST':
-        createWeddingProfile($dbh, $userId, $input);
+        if ($userId !== $scopeUserId) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Only the wedding owner can create the wedding profile']);
+            exit;
+        }
+        createWeddingProfile($dbh, $scopeUserId, $input);
         break;
     case 'PUT':
-        updateWeddingProfile($dbh, $userId, $input);
+        if ($userId !== $scopeUserId) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Only the wedding owner can update the wedding profile']);
+            exit;
+        }
+        updateWeddingProfile($dbh, $scopeUserId, $input);
         break;
     default:
         http_response_code(405);
@@ -38,7 +49,7 @@ switch ($method) {
 function getWeddingProfile($dbh, $userId) {
     try {
         $stmt = $dbh->prepare("
-            SELECT id, user_id, bride_name, groom_name, wedding_date, venue_name, venue_address, created_at, updated_at
+            SELECT id, user_id, bride_name, groom_name, wedding_date, venue_name, venue_address, bride_photo, groom_photo, couple_photo, created_at, updated_at
             FROM wedding_profiles WHERE user_id = :user_id LIMIT 1
         ");
         $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
@@ -92,7 +103,7 @@ function createWeddingProfile($dbh, $userId, $input) {
         $stmt->execute();
 
         $id = (int) $dbh->lastInsertId();
-        $fetch = $dbh->prepare("SELECT id, user_id, bride_name, groom_name, wedding_date, venue_name, venue_address, created_at, updated_at FROM wedding_profiles WHERE id = :id LIMIT 1");
+        $fetch = $dbh->prepare("SELECT id, user_id, bride_name, groom_name, wedding_date, venue_name, venue_address, bride_photo, groom_photo, couple_photo, created_at, updated_at FROM wedding_profiles WHERE id = :id LIMIT 1");
         $fetch->bindValue(':id', $id, PDO::PARAM_INT);
         $fetch->execute();
         $row = $fetch->fetch(PDO::FETCH_OBJ);
@@ -111,6 +122,9 @@ function updateWeddingProfile($dbh, $userId, $input) {
     $weddingDate  = isset($input['wedding_date'])  ? trim((string) $input['wedding_date'])  : null;
     $venueName    = isset($input['venue_name'])    ? trim((string) $input['venue_name'])    : null;
     $venueAddress = isset($input['venue_address']) ? trim((string) $input['venue_address']) : null;
+    $bridePhoto   = array_key_exists('bride_photo', $input)   ? trim((string) $input['bride_photo'])   : null;
+    $groomPhoto   = array_key_exists('groom_photo', $input)   ? trim((string) $input['groom_photo'])   : null;
+    $couplePhoto  = array_key_exists('couple_photo', $input)   ? trim((string) $input['couple_photo'])  : null;
 
     if ($weddingDate !== null && $weddingDate !== '') {
         $d = date_create($weddingDate);
@@ -130,7 +144,10 @@ function updateWeddingProfile($dbh, $userId, $input) {
                     groom_name = COALESCE(:groom_name, groom_name),
                     wedding_date = COALESCE(:wedding_date, wedding_date),
                     venue_name = COALESCE(:venue_name, venue_name),
-                    venue_address = COALESCE(:venue_address, venue_address)
+                    venue_address = COALESCE(:venue_address, venue_address),
+                    bride_photo = COALESCE(:bride_photo, bride_photo),
+                    groom_photo = COALESCE(:groom_photo, groom_photo),
+                    couple_photo = COALESCE(:couple_photo, couple_photo)
                 WHERE user_id = :user_id
             ");
             $upd->bindValue(':bride_name', $brideName !== null && $brideName !== '' ? $brideName : null, PDO::PARAM_STR);
@@ -138,12 +155,15 @@ function updateWeddingProfile($dbh, $userId, $input) {
             $upd->bindValue(':wedding_date', $weddingDate !== null && $weddingDate !== '' ? $weddingDate : null, PDO::PARAM_STR);
             $upd->bindValue(':venue_name', $venueName !== null && $venueName !== '' ? $venueName : null, PDO::PARAM_STR);
             $upd->bindValue(':venue_address', $venueAddress !== null && $venueAddress !== '' ? $venueAddress : null, PDO::PARAM_STR);
+            $upd->bindValue(':bride_photo', $bridePhoto !== null && $bridePhoto !== '' ? $bridePhoto : null, PDO::PARAM_STR);
+            $upd->bindValue(':groom_photo', $groomPhoto !== null && $groomPhoto !== '' ? $groomPhoto : null, PDO::PARAM_STR);
+            $upd->bindValue(':couple_photo', $couplePhoto !== null && $couplePhoto !== '' ? $couplePhoto : null, PDO::PARAM_STR);
             $upd->bindValue(':user_id', $userId, PDO::PARAM_INT);
             $upd->execute();
         } else {
             $ins = $dbh->prepare("
-                INSERT INTO wedding_profiles (user_id, bride_name, groom_name, wedding_date, venue_name, venue_address)
-                VALUES (:user_id, :bride_name, :groom_name, :wedding_date, :venue_name, :venue_address)
+                INSERT INTO wedding_profiles (user_id, bride_name, groom_name, wedding_date, venue_name, venue_address, bride_photo, groom_photo, couple_photo)
+                VALUES (:user_id, :bride_name, :groom_name, :wedding_date, :venue_name, :venue_address, :bride_photo, :groom_photo, :couple_photo)
             ");
             $ins->bindValue(':user_id', $userId, PDO::PARAM_INT);
             $ins->bindValue(':bride_name', $brideName ?: null, PDO::PARAM_STR);
@@ -151,10 +171,13 @@ function updateWeddingProfile($dbh, $userId, $input) {
             $ins->bindValue(':wedding_date', $weddingDate ?: null, PDO::PARAM_STR);
             $ins->bindValue(':venue_name', $venueName ?: null, PDO::PARAM_STR);
             $ins->bindValue(':venue_address', $venueAddress ?: null, PDO::PARAM_STR);
+            $ins->bindValue(':bride_photo', $bridePhoto ?: null, PDO::PARAM_STR);
+            $ins->bindValue(':groom_photo', $groomPhoto ?: null, PDO::PARAM_STR);
+            $ins->bindValue(':couple_photo', $couplePhoto ?: null, PDO::PARAM_STR);
             $ins->execute();
         }
 
-        $row = $dbh->prepare("SELECT id, user_id, bride_name, groom_name, wedding_date, venue_name, venue_address, created_at, updated_at FROM wedding_profiles WHERE user_id = :user_id LIMIT 1");
+        $row = $dbh->prepare("SELECT id, user_id, bride_name, groom_name, wedding_date, venue_name, venue_address, bride_photo, groom_photo, couple_photo, created_at, updated_at FROM wedding_profiles WHERE user_id = :user_id LIMIT 1");
         $row->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $row->execute();
         $profile = $row->fetch(PDO::FETCH_OBJ);

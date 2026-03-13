@@ -12,12 +12,13 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
-    case 'GET': listMembers($dbh, $userId); break;
-    case 'POST': createMember($dbh, $userId, $input); break;
-    case 'PUT': updateMember($dbh, $userId, $input); break;
-    case 'DELETE': deleteMember($dbh, $userId, $input); break;
+    case 'GET': listMembers($dbh, $scopeUserId); break;
+    case 'POST': createMember($dbh, $scopeUserId, $input); break;
+    case 'PUT': updateMember($dbh, $scopeUserId, $input); break;
+    case 'DELETE': deleteMember($dbh, $scopeUserId, $input); break;
     default:
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);
@@ -33,14 +34,23 @@ function ensureCategoryBelongsToUser($dbh, $categoryId, $userId) {
 
 function listMembers($dbh, $userId) {
     try {
-        $stmt = $dbh->prepare("
+        $groupCategoryId = isset($_GET['group_category_id']) ? (int) $_GET['group_category_id'] : 0;
+        $sql = "
             SELECT m.id, m.user_id, m.group_category_id, m.name, m.email, m.phone, m.created_at, m.updated_at,
                    g.name AS group_category_name
             FROM members m
             INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :user_id
-            ORDER BY m.name ASC
-        ");
-        $stmt->bindValue(':user_id', $userId, PDO::PARAM_INT);
+        ";
+        $params = [':user_id' => $userId];
+        if ($groupCategoryId > 0) {
+            $sql .= " WHERE m.group_category_id = :group_category_id";
+            $params[':group_category_id'] = $groupCategoryId;
+        }
+        $sql .= " ORDER BY m.name ASC";
+        $stmt = $dbh->prepare($sql);
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
         $stmt->execute();
         echo json_encode(['message' => 'OK', 'data' => $stmt->fetchAll(PDO::FETCH_OBJ)]);
     } catch (PDOException $e) {
@@ -98,8 +108,13 @@ function updateMember($dbh, $userId, $input) {
     $name = isset($input['name']) ? trim((string) $input['name']) : null;
     $email = array_key_exists('email', $input) ? trim((string) $input['email']) : null;
     $phone = array_key_exists('phone', $input) ? trim((string) $input['phone']) : null;
+    if ($name !== null && $name === '') {
+        http_response_code(400);
+        echo json_encode(['error' => 'Member name cannot be empty']);
+        return;
+    }
     try {
-        $check = $dbh->prepare("SELECT id FROM members m INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :user_id WHERE m.id = :id LIMIT 1");
+        $check = $dbh->prepare("SELECT m.id FROM members m INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :user_id WHERE m.id = :id LIMIT 1");
         $check->bindValue(':id', $id, PDO::PARAM_INT);
         $check->bindValue(':user_id', $userId, PDO::PARAM_INT);
         $check->execute();
@@ -119,7 +134,9 @@ function updateMember($dbh, $userId, $input) {
         }
         $sql = "UPDATE members SET " . implode(', ', $updates) . " WHERE id = :id";
         $stmt = $dbh->prepare($sql);
-        foreach ($params as $k => $v) { $stmt->bindValue($k, $v, is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR); }
+        foreach ($params as $k => $v) {
+            $stmt->bindValue($k, $v, $v === null ? PDO::PARAM_NULL : (is_int($v) ? PDO::PARAM_INT : PDO::PARAM_STR));
+        }
         $stmt->execute();
         $f = $dbh->prepare("SELECT id, user_id, group_category_id, name, email, phone, created_at, updated_at FROM members WHERE id = :id LIMIT 1");
         $f->bindValue(':id', $id, PDO::PARAM_INT);
@@ -128,7 +145,7 @@ function updateMember($dbh, $userId, $input) {
     } catch (PDOException $e) {
         error_log('Member update: ' . $e->getMessage());
         http_response_code(500);
-        echo json_encode(['error' => 'An error occurred']);
+        echo json_encode(['error' => 'An error occurred', 'detail' => $e->getMessage()]);
     }
 }
 

@@ -3,15 +3,38 @@
  * Expenditures API: list, create, update, delete. Item, amount, description, date.
  */
 include("connect/header.php");
+include_once(__DIR__ . '/lib/EmailHelper.php');
+include_once(__DIR__ . '/lib/EmailTemplates.php');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 if (!isset($_SESSION['user_id'])) { http_response_code(401); echo json_encode(['error' => 'Unauthorized']); exit; }
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
-    case 'GET': listExpenditures($dbh, $userId); break;
-    case 'POST': createExpenditure($dbh, $userId, $input); break;
-    case 'PUT': updateExpenditure($dbh, $userId, $input); break;
-    case 'DELETE': deleteExpenditure($dbh, $userId, $input); break;
+    case 'GET':
+        if (!wmis_has_permission($dbh, 'expenditures.view')) {
+            http_response_code(403); echo json_encode(['error' => 'You do not have permission to view expenditures']); exit;
+        }
+        listExpenditures($dbh, $scopeUserId);
+        break;
+    case 'POST':
+        if (!wmis_has_permission($dbh, 'expenditures.add')) {
+            http_response_code(403); echo json_encode(['error' => 'You do not have permission to add expenditures']); exit;
+        }
+        createExpenditure($dbh, $scopeUserId, $input);
+        break;
+    case 'PUT':
+        if (!wmis_has_permission($dbh, 'expenditures.edit')) {
+            http_response_code(403); echo json_encode(['error' => 'You do not have permission to edit expenditures']); exit;
+        }
+        updateExpenditure($dbh, $scopeUserId, $input);
+        break;
+    case 'DELETE':
+        if (!wmis_has_permission($dbh, 'expenditures.delete')) {
+            http_response_code(403); echo json_encode(['error' => 'You do not have permission to delete expenditures']); exit;
+        }
+        deleteExpenditure($dbh, $scopeUserId, $input);
+        break;
     default: http_response_code(405); echo json_encode(['error' => 'Method not allowed']);
 }
 
@@ -46,8 +69,28 @@ function createExpenditure($dbh, $userId, $input) {
         $f = $dbh->prepare("SELECT id, user_id, item, amount, description, expenditure_date, created_at FROM expenditures WHERE id = :id LIMIT 1");
         $f->bindValue(':id', $id, PDO::PARAM_INT);
         $f->execute();
+        $data = $f->fetch(PDO::FETCH_OBJ);
+        try {
+            if (function_exists('wmis_send_email') && function_exists('wmis_email_expenditure_made')) {
+                $desc = ($data->description !== null && trim($data->description) !== '') ? $data->description : $data->item;
+                $stmtRoles = $dbh->prepare("
+                    SELECT DISTINCT m.id, m.name, m.email FROM members m
+                    INNER JOIN member_roles mr ON mr.member_id = m.id
+                    INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :uid
+                    WHERE TRIM(COALESCE(m.email, '')) != '' AND m.email IS NOT NULL
+                ");
+                $stmtRoles->bindValue(':uid', $userId, PDO::PARAM_INT);
+                $stmtRoles->execute();
+                while ($row = $stmtRoles->fetch(PDO::FETCH_OBJ)) {
+                    if (filter_var(trim($row->email), FILTER_VALIDATE_EMAIL)) {
+                        $tpl = wmis_email_expenditure_made($row->name, $desc, $data->amount, $data->expenditure_date);
+                        wmis_send_email($dbh, trim($row->email), $tpl['subject'], $tpl['body']);
+                    }
+                }
+            }
+        } catch (Exception $e) { error_log('Expenditure email: ' . $e->getMessage()); }
         http_response_code(201);
-        echo json_encode(['message' => 'Expenditure created', 'data' => $f->fetch(PDO::FETCH_OBJ)]);
+        echo json_encode(['message' => 'Expenditure created', 'data' => $data]);
     } catch (PDOException $e) { error_log('Expenditure create: ' . $e->getMessage()); http_response_code(500); echo json_encode(['error' => 'An error occurred']); }
 }
 

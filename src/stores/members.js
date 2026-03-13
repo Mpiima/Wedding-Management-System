@@ -45,7 +45,8 @@ export const useMembersStore = defineStore('members', () => {
         return r
       })
       .catch((err) => {
-        errorMessage.value = err?.response?.data?.error || 'Failed to update'
+        const data = err?.response?.data
+        errorMessage.value = data?.detail || data?.error || 'Failed to update'
         throw err
       })
   }

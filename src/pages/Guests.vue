@@ -12,7 +12,7 @@
           placeholder="Search guests..."
           class="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm focus:border-rose-500 focus:ring-2 focus:ring-rose-500/20"
         />
-        <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-rose-600" @click="openForm()">+ Add guest</button>
+        <button v-if="authStore.can('guests.add')" type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-rose-600" @click="openForm()">+ Add guest</button>
       </div>
     </div>
 
@@ -43,9 +43,9 @@
         </span>
       </template>
       <template #actions="{ row }">
-        <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openCard(row)">Card</button>
-        <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium ml-2" @click="openForm(row)">Edit</button>
-        <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
+        <button v-if="authStore.can('guests.view')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openCard(row)">Card</button>
+        <button v-if="authStore.can('guests.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium ml-2" @click="openForm(row)">Edit</button>
+        <button v-if="authStore.can('guests.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
       </template>
     </TableComponent>
 
@@ -95,9 +95,11 @@ import FormInput from '@/components/FormInput.vue'
 import InvitationCard from '@/components/InvitationCard.vue'
 import { useInvitedGuestsStore } from '@/stores/invitedGuests'
 import { useWeddingProfileStore } from '@/stores/weddingProfile'
+import { useAuthStore } from '@/stores/auth'
 
 const guestsStore = useInvitedGuestsStore()
 const weddingProfile = useWeddingProfileStore()
+const authStore = useAuthStore()
 
 const search = ref('')
 const currentPage = ref(1)

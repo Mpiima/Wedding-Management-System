@@ -8,7 +8,7 @@
       >
         <div class="absolute inset-0 bg-gray-900/40 backdrop-blur-sm" />
         <div
-          class="relative w-full max-w-lg rounded-2xl bg-gradient-to-b from-white to-rose-50/20 shadow-soft-lg border border-rose-100/80 overflow-hidden"
+          :class="['relative w-full rounded-2xl bg-gradient-to-b from-white to-rose-50/20 shadow-soft-lg border border-rose-100/80 overflow-hidden', sizeClass]"
           role="dialog"
           aria-modal="true"
           :aria-labelledby="titleId"
@@ -44,11 +44,14 @@ import { computed } from 'vue'
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   title: { type: String, default: '' },
-  closeOnBackdrop: { type: Boolean, default: true }
+  closeOnBackdrop: { type: Boolean, default: true },
+  /** 'default' = max-w-lg, 'wide' = max-w-2xl */
+  size: { type: String, default: 'default' }
 })
 
 const emit = defineEmits(['update:modelValue'])
 const titleId = computed(() => `modal-title-${Math.random().toString(36).slice(2)}`)
+const sizeClass = computed(() => props.size === 'wide' ? 'max-w-2xl' : 'max-w-lg')
 
 function close() {
   emit('update:modelValue', false)

@@ -11,21 +11,25 @@
           v-model="form.bride_name"
           label="Bride name"
           placeholder="Full name"
+          :disabled="!canEdit"
         />
         <FormInput
           v-model="form.groom_name"
           label="Groom name"
           placeholder="Full name"
+          :disabled="!canEdit"
         />
         <FormInput
           v-model="form.wedding_date"
           label="Wedding date"
           type="date"
+          :disabled="!canEdit"
         />
         <FormInput
           v-model="form.venue_name"
           label="Venue name"
           placeholder="Venue"
+          :disabled="!canEdit"
         />
         <div class="space-y-1">
           <label class="block text-sm font-medium text-gray-700">Venue address</label>
@@ -33,8 +37,44 @@
             v-model="form.venue_address"
             placeholder="Address"
             rows="2"
-            class="block w-full rounded-xl border border-rose-100 bg-rose-50/20 px-4 py-2.5 text-sm text-wmis-text placeholder-gray-500 transition-all duration-200 focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+            :disabled="!canEdit"
+            class="block w-full rounded-xl border border-rose-100 bg-rose-50/20 px-4 py-2.5 text-sm text-wmis-text placeholder-gray-500 transition-all duration-200 focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20 disabled:opacity-70 disabled:cursor-not-allowed"
           />
+        </div>
+
+        <!-- Wedding photos: Bride, Groom, Both -->
+        <div class="space-y-4 pt-4 border-t border-rose-100">
+          <p class="text-sm font-medium text-gray-700">Photos</p>
+          <p class="text-xs text-gray-500 -mt-2">Click a photo box to upload or replace. Use JPEG, PNG, GIF or WebP.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <div class="space-y-2">
+              <label class="block text-xs font-medium text-gray-500">Bride</label>
+              <div class="relative aspect-square max-w-[160px] rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/30 overflow-hidden">
+                <img v-if="weddingStore.profile?.bride_photo" :key="`bride-${photoCacheKey}-${weddingStore.profile?.bride_photo || ''}`" :src="photoUrl(weddingStore.profile.bride_photo, photoCacheKey)" alt="Bride" class="w-full h-full object-cover" />
+                <span v-else class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">No photo</span>
+                <span v-if="uploadingPhoto === 'bride'" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm font-medium">Updating…</span>
+                <input v-if="canEdit" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="onPhotoChange('bride', $event)" />
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="block text-xs font-medium text-gray-500">Groom</label>
+              <div class="relative aspect-square max-w-[160px] rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/30 overflow-hidden">
+                <img v-if="weddingStore.profile?.groom_photo" :key="`groom-${photoCacheKey}-${weddingStore.profile?.groom_photo || ''}`" :src="photoUrl(weddingStore.profile.groom_photo, photoCacheKey)" alt="Groom" class="w-full h-full object-cover" />
+                <span v-else class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">No photo</span>
+                <span v-if="uploadingPhoto === 'groom'" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm font-medium">Updating…</span>
+                <input v-if="canEdit" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="onPhotoChange('groom', $event)" />
+              </div>
+            </div>
+            <div class="space-y-2">
+              <label class="block text-xs font-medium text-gray-500">Couple (both)</label>
+              <div class="relative aspect-square max-w-[160px] rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50/30 overflow-hidden">
+                <img v-if="weddingStore.profile?.couple_photo" :key="`couple-${photoCacheKey}-${weddingStore.profile?.couple_photo || ''}`" :src="photoUrl(weddingStore.profile.couple_photo, photoCacheKey)" alt="Couple" class="w-full h-full object-cover" />
+                <span v-else class="absolute inset-0 flex items-center justify-center text-gray-400 text-sm">No photo</span>
+                <span v-if="uploadingPhoto === 'couple'" class="absolute inset-0 flex items-center justify-center bg-black/40 text-white text-sm font-medium">Updating…</span>
+                <input v-if="canEdit" type="file" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" @change="onPhotoChange('couple', $event)" />
+              </div>
+            </div>
+          </div>
         </div>
 
         <p v-if="weddingStore.errorMessage" class="text-sm text-rose-600 bg-rose-50 rounded-xl px-4 py-2">
@@ -45,20 +85,23 @@
         </p>
 
         <div class="flex justify-end gap-2 pt-4">
-          <button
-            type="button"
-            class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-            @click="resetForm"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            class="rounded-xl bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600 disabled:opacity-50"
-            :disabled="saving"
-          >
-            {{ saving ? 'Saving…' : 'Save' }}
-          </button>
+          <template v-if="canEdit">
+            <button
+              type="button"
+              class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+              @click="resetForm"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="rounded-xl bg-rose-500 px-4 py-2 text-sm font-medium text-white hover:bg-rose-600 disabled:opacity-50"
+              :disabled="saving"
+            >
+              {{ saving ? 'Saving…' : 'Save' }}
+            </button>
+          </template>
+          <p v-else class="text-sm text-gray-500">View only. Only the wedding owner can edit these details.</p>
         </div>
       </form>
     </div>
@@ -66,11 +109,46 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted, watch } from 'vue'
+import { ref, reactive, onMounted, watch, computed } from 'vue'
 import FormInput from '@/components/FormInput.vue'
 import { useWeddingProfileStore } from '@/stores/weddingProfile'
+import { useAuthStore } from '@/stores/auth'
+import { weddingPhotoUrl } from '@/config/api.js'
 
 const weddingStore = useWeddingProfileStore()
+const authStore = useAuthStore()
+
+const canEdit = computed(() => authStore.can('settings.edit') || authStore.can('*'))
+
+function photoUrl(path, cacheKey) {
+  return weddingPhotoUrl(path, cacheKey)
+}
+
+const uploadingPhoto = ref(null)
+const photoCacheKey = ref(0)
+
+async function onPhotoChange(type, event) {
+  const file = event.target?.files?.[0]
+  if (!file || !file.type.startsWith('image/')) return
+  if (!weddingStore.profile) {
+    weddingStore.errorMessage = 'Save wedding profile first, then add photos.'
+    return
+  }
+  uploadingPhoto.value = type
+  weddingStore.clearError()
+  try {
+    const url = await weddingStore.uploadPhoto(type, file)
+    await weddingStore.updateWeddingProfile({ [type + '_photo']: url })
+    photoCacheKey.value = Date.now()
+    successMessage.value = type.charAt(0).toUpperCase() + type.slice(1) + ' photo updated.'
+    setTimeout(() => { successMessage.value = '' }, 3000)
+  } catch (_) {
+    // error set in store
+  } finally {
+    uploadingPhoto.value = null
+    event.target.value = ''
+  }
+}
 
 const form = reactive({
   bride_name: '',

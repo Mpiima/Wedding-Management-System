@@ -15,12 +15,12 @@
 
         <form class="space-y-5" @submit.prevent="handleSubmit">
           <FormInput
-            v-model="email"
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
+            v-model="login"
+            label="Email or username"
+            type="text"
+            placeholder="you@example.com or your.username"
             required
-            :error="errors.email"
+            :error="errors.login"
           />
           <div class="space-y-1">
             <label class="block text-sm font-medium text-gray-700">
@@ -77,21 +77,21 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 
-const email = ref('')
+const login = ref('')
 const password = ref('')
 const remember = ref(false)
 const showPassword = ref(false)
 const loading = ref(false)
-const errors = reactive({ email: '', password: '' })
+const errors = reactive({ login: '', password: '' })
 
 const displayError = computed(() => authStore.errorMessage)
 
 function handleSubmit() {
   authStore.clearError()
-  errors.email = ''
+  errors.login = ''
   errors.password = ''
-  if (!email.value.trim()) {
-    errors.email = 'Email is required.'
+  if (!login.value.trim()) {
+    errors.login = 'Email or username is required.'
     return
   }
   if (!password.value) {
@@ -99,7 +99,7 @@ function handleSubmit() {
     return
   }
   loading.value = true
-  authStore.userLogin({ email: email.value.trim(), password: password.value }).then(() => {
+  authStore.userLogin({ login: login.value.trim(), password: password.value }).then(() => {
     loading.value = false
     if (authStore.loginResponse && !authStore.errorMessage) {
       const redirect = route.query.redirect || '/'

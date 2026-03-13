@@ -41,6 +41,8 @@ const routes = [
       { path: 'reports/contributions', name: 'ContributionsReport', component: lazy('ReportsContributions') },
       { path: 'reports/guests', name: 'GuestReport', component: lazy('ReportsGuests') },
       { path: 'settings/profile', name: 'WeddingProfile', component: lazy('SettingsProfile') },
+      { path: 'settings/account', name: 'Account', component: lazy('SettingsAccount') },
+      { path: 'settings/email', name: 'EmailConfig', component: lazy('SettingsEmail') },
       { path: 'settings/system', name: 'SystemSettings', component: lazy('SettingsSystem') }
     ]
   }

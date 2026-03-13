@@ -78,14 +78,26 @@ foreach ($files as $path) {
         exit(1);
     }
 
-    // Run each statement (split by semicolon)
+    // Run each statement (split by semicolon; strip comments so semicolons in comments don't break split)
+    $sql = preg_replace('/^\s*--[^\n]*/m', '', $sql);
+    $sql = preg_replace('/^\s*\/\*.*?\*\//ms', '', $sql);
     $statements = array_filter(array_map('trim', explode(';', $sql)), function ($s) {
-        return $s !== '' && strpos(trim($s), '--') !== 0;
+        return $s !== '';
     });
 
     foreach ($statements as $statement) {
         if (trim($statement) === '') continue;
-        $pdo->exec($statement);
+        try {
+            $pdo->exec($statement);
+        } catch (PDOException $e) {
+            $code = (string) $e->getCode();
+            $msg = $e->getMessage();
+            if (($code === '42S21' || $code === '1060') && strpos($msg, 'Duplicate column') !== false) continue;
+            if (($code === '42S21' || $code === '1061') && (strpos($msg, 'Duplicate key') !== false || strpos($msg, 'duplicate key') !== false)) continue;
+            if ($code === '1091' && (strpos($msg, 'check that column') !== false || strpos($msg, 'check that key') !== false)) continue;
+            if (($code === '1022' || $code === '1826') && strpos($msg, 'Duplicate') !== false) continue;
+            throw $e;
+        }
     }
 
     $stmt->execute(['name' => $name]);

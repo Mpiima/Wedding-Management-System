@@ -34,7 +34,7 @@ export const useContributionsStore = defineStore('contributions', () => {
     errorMessage.value = null
     return await api.put(ENDPOINT, { id, ...data }).then((r) => {
       if (r?.data?.data) {
-        const i = contributions.value.findIndex((c) => Number(c.id) === Number(id))
+        const i = contributions.value.findIndex((c) => c.type === 'direct' && Number(c.id) === Number(id))
         if (i !== -1) contributions.value[i] = r.data.data
       }
       return r
@@ -47,7 +47,7 @@ export const useContributionsStore = defineStore('contributions', () => {
   async function deleteContribution(id) {
     errorMessage.value = null
     return await api.delete(ENDPOINT, { data: { id } }).then((r) => {
-      contributions.value = contributions.value.filter((c) => Number(c.id) !== Number(id))
+      contributions.value = contributions.value.filter((c) => !(c.type === 'direct' && Number(c.id) === Number(id)))
       return r
     }).catch((err) => {
       errorMessage.value = err?.response?.data?.error || 'Failed to delete'

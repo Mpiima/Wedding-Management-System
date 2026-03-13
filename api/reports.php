@@ -15,6 +15,7 @@ if (!isset($_SESSION['user_id'])) {
     exit;
 }
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 try {
     $dbh->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
@@ -24,7 +25,7 @@ try {
         FROM pledge_payments pp
         INNER JOIN pledges p ON p.id = pp.pledge_id AND p.user_id = :uid
     ");
-    $s->bindValue(':uid', $userId, PDO::PARAM_INT);
+    $s->bindValue(':uid', $scopeUserId, PDO::PARAM_INT);
     $s->execute();
     $row = $s->fetch(PDO::FETCH_OBJ);
     if ($row) $totalPledgePayments = (float) $row->total;
@@ -36,14 +37,14 @@ try {
         INNER JOIN members m ON m.id = c.member_id
         INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :uid
     ");
-    $s->bindValue(':uid', $userId, PDO::PARAM_INT);
+    $s->bindValue(':uid', $scopeUserId, PDO::PARAM_INT);
     $s->execute();
     $row = $s->fetch(PDO::FETCH_OBJ);
     if ($row) $totalContributions = (float) $row->total;
 
     $totalExpenditures = 0;
     $s = $dbh->prepare("SELECT COALESCE(SUM(amount), 0) AS total FROM expenditures WHERE user_id = :uid");
-    $s->bindValue(':uid', $userId, PDO::PARAM_INT);
+    $s->bindValue(':uid', $scopeUserId, PDO::PARAM_INT);
     $s->execute();
     $row = $s->fetch(PDO::FETCH_OBJ);
     if ($row) $totalExpenditures = (float) $row->total;
@@ -57,7 +58,7 @@ try {
         INNER JOIN members m ON m.id = p.member_id
         INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :uid
     ");
-    $s->bindValue(':uid', $userId, PDO::PARAM_INT);
+    $s->bindValue(':uid', $scopeUserId, PDO::PARAM_INT);
     $s->execute();
     $row = $s->fetch(PDO::FETCH_OBJ);
     if ($row) $totalPledged = (float) $row->total;

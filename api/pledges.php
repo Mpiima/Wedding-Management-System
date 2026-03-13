@@ -1,23 +1,48 @@
 <?php
 /**
  * Pledges API: list, create, update, delete. POST action=pay to record payment.
+ * Uses scope user id so members see the wedding owner's pledges.
  */
 include("connect/header.php");
+include_once(__DIR__ . '/lib/EmailHelper.php');
+include_once(__DIR__ . '/lib/EmailTemplates.php');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 if (!isset($_SESSION['user_id'])) { http_response_code(401); echo json_encode(['error' => 'Unauthorized']); exit; }
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
-    case 'GET': listPledges($dbh, $userId); break;
+    case 'GET':
+        if (!function_exists('wmis_has_permission') || !wmis_has_permission($dbh, 'pledges.view')) {
+            http_response_code(403); echo json_encode(['error' => 'You do not have permission to view pledges']); exit;
+        }
+        listPledges($dbh, $scopeUserId);
+        break;
     case 'POST':
         if (!empty($input['action']) && $input['action'] === 'pay') {
-            recordPayment($dbh, $userId, $input);
+            if (!function_exists('wmis_has_permission') || !wmis_has_permission($dbh, 'pledges.edit')) {
+                http_response_code(403); echo json_encode(['error' => 'You do not have permission to record payments']); exit;
+            }
+            recordPayment($dbh, $scopeUserId, $input);
         } else {
-            createPledge($dbh, $userId, $input);
+            if (!function_exists('wmis_has_permission') || !wmis_has_permission($dbh, 'pledges.add')) {
+                http_response_code(403); echo json_encode(['error' => 'You do not have permission to add pledges']); exit;
+            }
+            createPledge($dbh, $scopeUserId, $input);
         }
         break;
-    case 'PUT': updatePledge($dbh, $userId, $input); break;
-    case 'DELETE': deletePledge($dbh, $userId, $input); break;
+    case 'PUT':
+        if (!function_exists('wmis_has_permission') || !wmis_has_permission($dbh, 'pledges.edit')) {
+            http_response_code(403); echo json_encode(['error' => 'You do not have permission to edit pledges']); exit;
+        }
+        updatePledge($dbh, $scopeUserId, $input);
+        break;
+    case 'DELETE':
+        if (!function_exists('wmis_has_permission') || !wmis_has_permission($dbh, 'pledges.delete')) {
+            http_response_code(403); echo json_encode(['error' => 'You do not have permission to delete pledges']); exit;
+        }
+        deletePledge($dbh, $scopeUserId, $input);
+        break;
     default: http_response_code(405); echo json_encode(['error' => 'Method not allowed']);
 }
 
@@ -93,8 +118,21 @@ function createPledge($dbh, $userId, $input) {
         $f = $dbh->prepare("SELECT p.id, p.member_id, p.amount_pledged, p.amount_paid, p.paying_date, p.created_at, m.name AS member_name FROM pledges p INNER JOIN members m ON m.id = p.member_id WHERE p.id = :id LIMIT 1");
         $f->bindValue(':id', $id, PDO::PARAM_INT);
         $f->execute();
+        $data = $f->fetch(PDO::FETCH_OBJ);
+        try {
+            if (function_exists('wmis_send_email') && function_exists('wmis_email_pledge_made')) {
+                $m = $dbh->prepare("SELECT name, email FROM members WHERE id = :id LIMIT 1");
+                $m->bindValue(':id', $data->member_id, PDO::PARAM_INT);
+                $m->execute();
+                $mem = $m->fetch(PDO::FETCH_OBJ);
+                if ($mem && trim($mem->email ?? '') !== '' && filter_var(trim($mem->email), FILTER_VALIDATE_EMAIL)) {
+                    $tpl = wmis_email_pledge_made($mem->name, $data->amount_pledged, $data->paying_date ?? $data->created_at);
+                    wmis_send_email($dbh, trim($mem->email), $tpl['subject'], $tpl['body']);
+                }
+            }
+        } catch (Exception $e) { error_log('Pledge created email: ' . $e->getMessage()); }
         http_response_code(201);
-        echo json_encode(['message' => 'Pledge created', 'data' => $f->fetch(PDO::FETCH_OBJ)]);
+        echo json_encode(['message' => 'Pledge created', 'data' => $data]);
     } catch (PDOException $e) { error_log('Pledge create: ' . $e->getMessage()); http_response_code(500); echo json_encode(['error' => 'An error occurred']); }
 }
 
@@ -136,7 +174,7 @@ function recordPayment($dbh, $userId, $input) {
     if (!$d) { http_response_code(400); echo json_encode(['error' => 'Invalid paid_at date']); return; }
     $paidAt = $d->format('Y-m-d');
     try {
-        $check = $dbh->prepare("SELECT p.id, p.amount_paid FROM pledges p INNER JOIN members m ON m.id = p.member_id INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :uid WHERE p.id = :pid LIMIT 1");
+        $check = $dbh->prepare("SELECT p.id, p.amount_paid, p.amount_pledged FROM pledges p INNER JOIN members m ON m.id = p.member_id INNER JOIN group_categories g ON g.id = m.group_category_id AND g.user_id = :uid WHERE p.id = :pid LIMIT 1");
         $check->bindValue(':uid', $userId, PDO::PARAM_INT);
         $check->bindValue(':pid', $pledgeId, PDO::PARAM_INT);
         $check->execute();
@@ -153,6 +191,18 @@ function recordPayment($dbh, $userId, $input) {
         $upd->bindValue(':amount_paid', $newPaid, PDO::PARAM_STR);
         $upd->bindValue(':id', $pledgeId, PDO::PARAM_INT);
         $upd->execute();
+        try {
+            if (function_exists('wmis_send_email') && function_exists('wmis_email_payment_made')) {
+                $pm = $dbh->prepare("SELECT m.name, m.email FROM members m INNER JOIN pledges p ON p.member_id = m.id WHERE p.id = :pid LIMIT 1");
+                $pm->bindValue(':pid', $pledgeId, PDO::PARAM_INT);
+                $pm->execute();
+                $mem = $pm->fetch(PDO::FETCH_OBJ);
+                if ($mem && trim($mem->email ?? '') !== '' && filter_var(trim($mem->email), FILTER_VALIDATE_EMAIL)) {
+                    $tpl = wmis_email_payment_made($mem->name, $amount, $paidAt, $newPaid, $pledge->amount_pledged);
+                    wmis_send_email($dbh, trim($mem->email), $tpl['subject'], $tpl['body']);
+                }
+            }
+        } catch (Exception $e) { error_log('Payment email: ' . $e->getMessage()); }
         $row = $dbh->prepare("SELECT id, pledge_id, amount, paid_at, created_at FROM pledge_payments WHERE id = :id LIMIT 1");
         $row->bindValue(':id', $payId, PDO::PARAM_INT);
         $row->execute();

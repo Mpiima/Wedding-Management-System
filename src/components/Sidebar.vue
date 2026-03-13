@@ -31,12 +31,13 @@
       </router-link>
 
       <template v-for="group in menuGroups" :key="group.label">
-        <p class="px-4 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400">
-          {{ group.label }}
-        </p>
-        <router-link
-          v-for="item in group.items"
-          :key="item.to"
+        <template v-if="filterByPermission(group.items).length > 0">
+          <p class="px-4 pt-5 pb-1.5 text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-400">
+            {{ group.label }}
+          </p>
+          <router-link
+            v-for="item in filterByPermission(group.items)"
+            :key="item.to"
           :to="item.to"
           class="mx-2 mb-1 flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-all duration-300 ease-luxury border border-transparent"
           :class="isActive(item.to) ? 'bg-gradient-to-r from-rose-50 to-rose-100/50 text-rose-700 border-rose-200/50' : 'text-gray-600 hover:bg-rose-50/60 hover:text-rose-600'"
@@ -46,20 +47,36 @@
           <span class="truncate">{{ item.name }}</span>
         </router-link>
       </template>
+      </template>
     </nav>
   </aside>
 </template>
 
 <script setup>
 import { useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import { ROUTE_PERMISSIONS } from '@/config/permissions'
 
 const route = useRoute()
+const authStore = useAuthStore()
 
 defineProps({
   mobile: { type: Boolean, default: false }
 })
 
 defineEmits(['close'])
+
+function can(perm) {
+  return authStore.can(perm)
+}
+
+function filterByPermission(items) {
+  return items.filter((item) => {
+    const perm = ROUTE_PERMISSIONS[item.to]
+    if (perm == null) return true
+    return can(perm)
+  })
+}
 
 const menuGroups = [
   {
@@ -121,7 +138,9 @@ const menuGroups = [
   {
     label: 'Settings',
     items: [
+      { name: 'My account', to: '/settings/account', icon: '👤' },
       { name: 'Wedding Profile', to: '/settings/profile', icon: '💒' },
+      { name: 'Email configuration', to: '/settings/email', icon: '✉️' },
       { name: 'System Settings', to: '/settings/system', icon: '⚙️' }
     ]
   }

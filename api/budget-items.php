@@ -19,19 +19,40 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
     case 'GET':
-        listItems($dbh, $userId, $_GET['category_id'] ?? null);
+        if (!wmis_has_permission($dbh, 'budget.view')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to view budget']);
+            exit;
+        }
+        listItems($dbh, $scopeUserId, $_GET['category_id'] ?? null);
         break;
     case 'POST':
-        createItem($dbh, $userId, $input);
+        if (!wmis_has_permission($dbh, 'budget.add')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to add budget']);
+            exit;
+        }
+        createItem($dbh, $scopeUserId, $input);
         break;
     case 'PUT':
-        updateItem($dbh, $userId, $input);
+        if (!wmis_has_permission($dbh, 'budget.edit')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to edit budget']);
+            exit;
+        }
+        updateItem($dbh, $scopeUserId, $input);
         break;
     case 'DELETE':
-        deleteItem($dbh, $userId, $input);
+        if (!wmis_has_permission($dbh, 'budget.delete')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to delete budget']);
+            exit;
+        }
+        deleteItem($dbh, $scopeUserId, $input);
         break;
     default:
         http_response_code(405);
@@ -58,7 +79,7 @@ function listItems($dbh, $userId, $categoryId) {
 
         if ($categoryId !== null) {
             $stmt = $dbh->prepare("
-                SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, created_at, updated_at
+                SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, covered_type, created_at, updated_at
                 FROM budget_items
                 WHERE budget_category_id = :category_id
                 ORDER BY item_name ASC
@@ -67,7 +88,7 @@ function listItems($dbh, $userId, $categoryId) {
             $stmt->execute();
         } else {
             $stmt = $dbh->prepare("
-                SELECT i.id, i.budget_category_id, i.item_name, i.quantity, i.unit_amount, i.cost, i.status, i.created_at, i.updated_at
+                SELECT i.id, i.budget_category_id, i.item_name, i.quantity, i.unit_amount, i.cost, i.status, i.covered_type, i.created_at, i.updated_at
                 FROM budget_items i
                 INNER JOIN budget_categories c ON c.id = i.budget_category_id AND c.user_id = :user_id
                 ORDER BY c.sort_order ASC, c.name ASC, i.item_name ASC
@@ -108,10 +129,20 @@ function createItem($dbh, $userId, $input) {
     $status = isset($input['status']) ? strtoupper(trim((string) $input['status'])) : 'NOT_COVERED';
     if (!in_array($status, ['COVERED', 'NOT_COVERED'], true)) $status = 'NOT_COVERED';
 
+    $coveredType = null;
+    if ($status === 'COVERED') {
+        $ct = isset($input['covered_type']) ? strtoupper(trim((string) $input['covered_type'])) : '';
+        if (in_array($ct, ['DEFAULT', 'FROM_CONTRIBUTIONS'], true)) {
+            $coveredType = $ct;
+        } else {
+            $coveredType = 'DEFAULT';
+        }
+    }
+
     try {
         $stmt = $dbh->prepare("
-            INSERT INTO budget_items (budget_category_id, item_name, quantity, unit_amount, cost, status)
-            VALUES (:budget_category_id, :item_name, :quantity, :unit_amount, :cost, :status)
+            INSERT INTO budget_items (budget_category_id, item_name, quantity, unit_amount, cost, status, covered_type)
+            VALUES (:budget_category_id, :item_name, :quantity, :unit_amount, :cost, :status, :covered_type)
         ");
         $stmt->bindValue(':budget_category_id', $categoryId, PDO::PARAM_INT);
         $stmt->bindValue(':item_name', $itemName, PDO::PARAM_STR);
@@ -119,10 +150,11 @@ function createItem($dbh, $userId, $input) {
         $stmt->bindValue(':unit_amount', $unitAmount, PDO::PARAM_STR);
         $stmt->bindValue(':cost', $cost, PDO::PARAM_STR);
         $stmt->bindValue(':status', $status, PDO::PARAM_STR);
+        $stmt->bindValue(':covered_type', $coveredType, PDO::PARAM_STR);
         $stmt->execute();
 
         $id = (int) $dbh->lastInsertId();
-        $fetch = $dbh->prepare("SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, created_at, updated_at FROM budget_items WHERE id = :id LIMIT 1");
+        $fetch = $dbh->prepare("SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, covered_type, created_at, updated_at FROM budget_items WHERE id = :id LIMIT 1");
         $fetch->bindValue(':id', $id, PDO::PARAM_INT);
         $fetch->execute();
         $row = $fetch->fetch(PDO::FETCH_OBJ);
@@ -184,6 +216,16 @@ function updateItem($dbh, $userId, $input) {
             if (!in_array($st, ['COVERED', 'NOT_COVERED'], true)) $st = 'NOT_COVERED';
             $updates[] = 'status = :status';
             $params[':status'] = $st;
+
+            if ($st === 'COVERED') {
+                $ct = array_key_exists('covered_type', $input) ? strtoupper(trim((string) $input['covered_type'])) : '';
+                $coveredType = in_array($ct, ['DEFAULT', 'FROM_CONTRIBUTIONS'], true) ? $ct : 'DEFAULT';
+                $updates[] = 'covered_type = :covered_type';
+                $params[':covered_type'] = $coveredType;
+            } else {
+                $updates[] = 'covered_type = :covered_type';
+                $params[':covered_type'] = null;
+            }
         }
 
         if (count($updates) > 0) {
@@ -201,7 +243,7 @@ function updateItem($dbh, $userId, $input) {
         }
 
         if (count($updates) === 0) {
-            $fetch = $dbh->prepare("SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, created_at, updated_at FROM budget_items WHERE id = :id LIMIT 1");
+            $fetch = $dbh->prepare("SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, covered_type, created_at, updated_at FROM budget_items WHERE id = :id LIMIT 1");
             $fetch->bindValue(':id', $id, PDO::PARAM_INT);
             $fetch->execute();
             $row = $fetch->fetch(PDO::FETCH_OBJ);
@@ -216,7 +258,7 @@ function updateItem($dbh, $userId, $input) {
         }
         $stmt->execute();
 
-        $fetch = $dbh->prepare("SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, created_at, updated_at FROM budget_items WHERE id = :id LIMIT 1");
+        $fetch = $dbh->prepare("SELECT id, budget_category_id, item_name, quantity, unit_amount, cost, status, covered_type, created_at, updated_at FROM budget_items WHERE id = :id LIMIT 1");
         $fetch->bindValue(':id', $id, PDO::PARAM_INT);
         $fetch->execute();
         $row = $fetch->fetch(PDO::FETCH_OBJ);

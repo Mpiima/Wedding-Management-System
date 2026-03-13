@@ -6,11 +6,11 @@
         <p class="text-sm text-gray-500">Member list and contact details. Every member belongs to a group category.</p>
       </div>
       <div class="flex flex-wrap gap-2">
-        <button type="button" class="btn-gold" @click="openInviteModal">
+        <button v-if="authStore.can('members.add')" type="button" class="btn-gold" @click="openInviteModal">
           <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
           Invite members
         </button>
-        <button type="button" class="btn-primary" @click="openModal()">+ Add member</button>
+        <button v-if="authStore.can('members.add')" type="button" class="btn-primary" @click="openModal()">+ Add member</button>
       </div>
     </div>
 
@@ -21,8 +21,10 @@
       <template #cell-email="{ value }">{{ value || '—' }}</template>
       <template #cell-phone="{ value }">{{ value || '—' }}</template>
       <template #actions="{ row }">
-        <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openModal(row)">Edit</button>
-        <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
+        <template v-if="authStore.can('members.edit') || authStore.can('members.delete')">
+          <button v-if="authStore.can('members.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openModal(row)">Edit</button>
+          <button v-if="authStore.can('members.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
+        </template>
       </template>
     </TableComponent>
 
@@ -89,9 +91,11 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import FormInput from '@/components/FormInput.vue'
 import { useMembersStore } from '@/stores/members'
 import { useGroupCategoriesStore } from '@/stores/groupCategories'
+import { useAuthStore } from '@/stores/auth'
 
 const store = useMembersStore()
 const categoryStore = useGroupCategoriesStore()
+const authStore = useAuthStore()
 
 const showModal = ref(false)
 const showDeleteModal = ref(false)

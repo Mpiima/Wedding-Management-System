@@ -5,7 +5,7 @@
         <h1 class="text-xl font-semibold text-wmis-text">Vendor Contracts</h1>
         <p class="text-sm text-gray-500">Contract details and payment tracking</p>
       </div>
-      <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-rose-600" @click="openForm()">+ Add contract</button>
+      <button v-if="authStore.can('vendor_contracts.add')" type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-rose-600" @click="openForm()">+ Add contract</button>
     </div>
 
     <p v-if="contractsStore.errorMessage" class="rounded-xl bg-rose-50 px-4 py-2 text-sm text-rose-700">{{ contractsStore.errorMessage }}</p>
@@ -19,8 +19,8 @@
         <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" :class="value === 'Signed' ? 'bg-emerald-100 text-emerald-700' : value === 'Completed' ? 'bg-gray-100 text-gray-600' : 'bg-amber-100 text-amber-700'">{{ value }}</span>
       </template>
       <template #actions="{ row }">
-        <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openForm(row)">Edit</button>
-        <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
+        <button v-if="authStore.can('vendor_contracts.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openForm(row)">Edit</button>
+        <button v-if="authStore.can('vendor_contracts.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
       </template>
     </TableComponent>
 
@@ -68,9 +68,11 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import FormInput from '@/components/FormInput.vue'
 import { useVendorContractsStore } from '@/stores/vendorContracts'
 import { useVendorsStore } from '@/stores/vendors'
+import { useAuthStore } from '@/stores/auth'
 
 const contractsStore = useVendorContractsStore()
 const vendorsStore = useVendorsStore()
+const authStore = useAuthStore()
 const showModal = ref(false)
 const editingId = ref(null)
 const currentPage = ref(1)

@@ -8,14 +8,26 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(localStorage.getItem('token'))
   const profile = ref(null)
   const abilities = ref([])
+  const permissions = ref([])
 
-  // Restore profile from localStorage on init
+  // Restore profile and permissions from localStorage on init
   try {
     const stored = localStorage.getItem('userProfile')
-    if (stored) profile.value = JSON.parse(stored)
+    if (stored) {
+      const p = JSON.parse(stored)
+      profile.value = p
+      permissions.value = Array.isArray(p?.permissions) ? p.permissions : []
+    }
   } catch (_) {}
 
   const isAuthenticated = computed(() => !!token.value)
+
+  function can(permission) {
+    const list = permissions.value
+    if (!Array.isArray(list)) return false
+    if (list.includes('*')) return true
+    return list.includes(permission)
+  }
 
   async function userLogin(data) {
     errorMessage.value = null
@@ -39,11 +51,12 @@ export const useAuthStore = defineStore('auth', () => {
           }
           if (dataInfo) {
             const userProfile = dataInfo.userProfile || dataInfo
+            const perms = dataInfo.permissions ?? userProfile?.permissions
+            if (Array.isArray(perms)) permissions.value = perms
             localStorage.setItem('userProfile', JSON.stringify(userProfile))
             profile.value = userProfile
           }
           loginResponse.value = res
-          // Abilities based on role (extend as needed)
           const userProfile = res.data?.userProfile || res.data
           const role = (userProfile?.role || res.data?.role || '').toLowerCase()
           if (role === 'admin') {
@@ -72,6 +85,7 @@ export const useAuthStore = defineStore('auth', () => {
     loginResponse.value = null
     errorMessage.value = null
     abilities.value = []
+    permissions.value = []
     localStorage.removeItem('token')
     localStorage.removeItem('userProfile')
     localStorage.removeItem('abilities')
@@ -92,6 +106,54 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  async function fetchProfile() {
+    try {
+      const r = await api.get('me.php')
+      if (r?.data?.data) {
+        const current = profile.value || {}
+        profile.value = { ...current, ...r.data.data }
+        localStorage.setItem('userProfile', JSON.stringify(profile.value))
+      }
+      return r
+    } catch (e) {
+      throw e
+    }
+  }
+
+  async function updateProfileApi(payload) {
+    const r = await api.put('me.php', payload)
+    if (r?.data?.data) {
+      const current = profile.value || {}
+      profile.value = { ...current, ...r.data.data }
+      localStorage.setItem('userProfile', JSON.stringify(profile.value))
+    }
+    return r
+  }
+
+  async function uploadAvatar(file) {
+    const form = new FormData()
+    form.append('photo', file)
+    const r = await api.post('upload-avatar.php', form)
+    const url = r?.data?.data?.url
+    if (url) await updateProfileApi({ avatar: url })
+    return url
+  }
+
+  async function changePassword(currentPassword, newPassword) {
+    errorMessage.value = null
+    try {
+      const r = await api.post('change-password.php', {
+        current_password: currentPassword,
+        new_password: newPassword
+      })
+      if (r?.data?.error) errorMessage.value = r.data.error
+      return r
+    } catch (err) {
+      errorMessage.value = err?.response?.data?.error || err?.message || 'Failed to change password'
+      throw err
+    }
+  }
+
   function clearError() {
     errorMessage.value = null
   }
@@ -102,11 +164,17 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     profile,
     abilities,
+    permissions,
     isAuthenticated,
+    can,
     userLogin,
     logout,
     updateToken,
     updateProfile,
+    fetchProfile,
+    updateProfileApi,
+    uploadAvatar,
+    changePassword,
     clearError
   }
 })

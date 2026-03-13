@@ -17,6 +17,10 @@ api.interceptors.request.use((config) => {
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
+  // Let browser set Content-Type (with boundary) for FormData so uploads work
+  if (config.data instanceof FormData) {
+    delete config.headers['Content-Type']
+  }
   return config
 })
 
@@ -34,3 +38,12 @@ api.interceptors.response.use(
 )
 
 export default api
+export { baseURL }
+
+/** Build URL for wedding profile photo with cache-bust param. Use uploads .htaccess for no-cache. */
+export function weddingPhotoUrl(path, cacheKey) {
+  if (!path) return ''
+  const base = (baseURL || '').replace(/\/$/, '')
+  const full = base ? `${base}/${path.replace(/^\//, '')}` : path
+  return cacheKey ? `${full}?t=${cacheKey}` : full
+}

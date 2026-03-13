@@ -6,12 +6,13 @@ include("connect/header.php");
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 if (!isset($_SESSION['user_id'])) { http_response_code(401); echo json_encode(['error' => 'Unauthorized']); exit; }
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
-    case 'GET': listGuests($dbh, $userId); break;
-    case 'POST': createGuest($dbh, $userId, $input); break;
-    case 'PUT': updateGuest($dbh, $userId, $input); break;
-    case 'DELETE': deleteGuest($dbh, $userId, $input); break;
+    case 'GET': listGuests($dbh, $scopeUserId); break;
+    case 'POST': createGuest($dbh, $scopeUserId, $input); break;
+    case 'PUT': updateGuest($dbh, $scopeUserId, $input); break;
+    case 'DELETE': deleteGuest($dbh, $scopeUserId, $input); break;
     default: http_response_code(405); echo json_encode(['error' => 'Method not allowed']);
 }
 

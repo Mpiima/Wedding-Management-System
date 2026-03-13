@@ -12,12 +12,13 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
-    case 'GET': listGroupCategories($dbh, $userId); break;
-    case 'POST': createGroupCategory($dbh, $userId, $input); break;
-    case 'PUT': updateGroupCategory($dbh, $userId, $input); break;
-    case 'DELETE': deleteGroupCategory($dbh, $userId, $input); break;
+    case 'GET': listGroupCategories($dbh, $scopeUserId); break;
+    case 'POST': createGroupCategory($dbh, $scopeUserId, $input); break;
+    case 'PUT': updateGroupCategory($dbh, $scopeUserId, $input); break;
+    case 'DELETE': deleteGroupCategory($dbh, $scopeUserId, $input); break;
     default:
         http_response_code(405);
         echo json_encode(['error' => 'Method not allowed']);

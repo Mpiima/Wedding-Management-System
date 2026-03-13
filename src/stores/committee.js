@@ -21,9 +21,16 @@ export const useCommitteeStore = defineStore('committee', () => {
       })
   }
 
-  async function assignRole(memberId, roleId) {
+  async function assignRole(memberId, roleId, credentials = {}) {
     errorMessage.value = null
-    return await api.post(ENDPOINT, { member_id: memberId, role_id: roleId })
+    const body = {
+      member_id: memberId,
+      role_id: roleId,
+      username: credentials.username ?? '',
+      password: credentials.password ?? '',
+      ...(credentials.email !== undefined && credentials.email !== '' ? { email: credentials.email } : {})
+    }
+    return await api.post(ENDPOINT, body)
       .then((r) => r)
       .catch((err) => {
         errorMessage.value = err?.response?.data?.error || 'Failed to assign role'
@@ -33,7 +40,7 @@ export const useCommitteeStore = defineStore('committee', () => {
 
   async function unassignRole(memberId, roleId) {
     errorMessage.value = null
-    return await api.delete(ENDPOINT, { data: { member_id: memberId, role_id: roleId } })
+    return await api.post(ENDPOINT, { action: 'unassign', member_id: memberId, role_id: roleId })
       .then((r) => r)
       .catch((err) => {
         errorMessage.value = err?.response?.data?.error || 'Failed to unassign'

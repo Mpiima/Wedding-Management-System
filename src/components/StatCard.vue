@@ -9,7 +9,12 @@
           {{ label }}
         </p>
         <p class="mt-2 font-display text-2xl font-semibold tracking-tight text-wmis-text truncate" :class="valueClass">
-          {{ displayValue }}
+          <template v-if="animate && typeof value === 'number'">
+            <AnimatedCounter :to="value" :duration="1500" :formatter="formatter || defaultNumberFormatter" />
+          </template>
+          <template v-else>
+            {{ displayValue }}
+          </template>
         </p>
         <p v-if="subtext" class="mt-1.5 text-sm text-gray-500">
           {{ subtext }}
@@ -37,6 +42,7 @@
 
 <script setup>
 import { computed } from 'vue'
+import AnimatedCounter from '@/components/AnimatedCounter.vue'
 
 const props = defineProps({
   label: { type: String, required: true },
@@ -47,8 +53,15 @@ const props = defineProps({
   highlight: { type: Boolean, default: false },
   valueClass: { type: String, default: '' },
   iconBgClass: { type: String, default: 'bg-rose-50 text-rose-500' },
-  iconColorClass: { type: String, default: '' }
+  iconColorClass: { type: String, default: '' },
+  animate: { type: Boolean, default: false },
+  formatter: { type: Function, default: null }
 })
+
+const defaultNumberFormatter = (n) => {
+  if (n >= 1000 && n < 1000000) return Math.round(n).toLocaleString()
+  return String(typeof n === 'number' ? Math.round(n) : n)
+}
 
 const displayValue = computed(() => {
   if (typeof props.value === 'number' && props.value >= 1000 && props.value < 1000000) {

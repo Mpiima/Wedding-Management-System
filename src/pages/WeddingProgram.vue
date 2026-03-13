@@ -5,18 +5,18 @@
         <h1 class="text-xl font-semibold text-wmis-text">Wedding Program</h1>
         <p class="text-sm text-gray-500">Event timeline and ceremony order</p>
       </div>
-      <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white" @click="openForm()">+ Add item</button>
+      <button v-if="authStore.can('wedding_program.add')" type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white" @click="openForm()">+ Add item</button>
     </div>
     <p v-if="programStore.errorMessage" class="rounded-xl bg-rose-50 px-4 py-2 text-sm text-rose-700">{{ programStore.errorMessage }}</p>
     <div v-if="!programStore.program.length" class="card-luxury px-6 py-14 text-center">
       <p class="font-display text-sm font-medium text-gray-500">No program items yet</p>
-      <button type="button" class="mt-4 rounded-xl bg-rose-500 px-4 py-2 text-sm font-medium text-white" @click="openForm()">+ Add item</button>
+      <button v-if="authStore.can('wedding_program.add')" type="button" class="mt-4 rounded-xl bg-rose-500 px-4 py-2 text-sm font-medium text-white" @click="openForm()">+ Add item</button>
     </div>
     <TableComponent v-else title="Program" :columns="columns" :data="programStore.program" row-key="id">
       <template #cell-description="{ value }">{{ value || '—' }}</template>
       <template #actions="{ row }">
-        <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openForm(row)">Edit</button>
-        <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
+        <button v-if="authStore.can('wedding_program.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openForm(row)">Edit</button>
+        <button v-if="authStore.can('wedding_program.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
       </template>
     </TableComponent>
     <ModalComponent v-model="showModal" :title="editingId ? 'Edit item' : 'Add item'">
@@ -41,8 +41,10 @@ import TableComponent from '@/components/TableComponent.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import FormInput from '@/components/FormInput.vue'
 import { useWeddingProgramStore } from '@/stores/weddingProgram'
+import { useAuthStore } from '@/stores/auth'
 
 const programStore = useWeddingProgramStore()
+const authStore = useAuthStore()
 const showModal = ref(false)
 const editingId = ref(null)
 const form = ref({ title: '', description: '', sort_order: 0 })

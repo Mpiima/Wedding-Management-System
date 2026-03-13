@@ -1,4 +1,4 @@
--- WMIS: Vendor contracts. Links to vendor; contract details and payment tracking.
+-- WMIS: Vendor contracts. Links to vendor, contract details and payment tracking.
 -- Migration: 016_vendor_contracts
 
 CREATE TABLE IF NOT EXISTS `vendor_contracts` (

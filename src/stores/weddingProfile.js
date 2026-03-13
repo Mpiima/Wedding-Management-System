@@ -87,6 +87,24 @@ export const useWeddingProfileStore = defineStore('weddingProfile', () => {
     profile.value = data
   }
 
+  async function uploadPhoto(type, file) {
+    errorMessage.value = null
+    const formData = new FormData()
+    formData.append('type', type)
+    formData.append('photo', file)
+    const apiModule = await import('@/config/api.js')
+    const api = apiModule.default
+    try {
+      const response = await api.post('upload-wedding-photo.php', formData)
+      const url = response?.data?.data?.url
+      if (!url) throw new Error('No URL returned')
+      return url
+    } catch (err) {
+      errorMessage.value = err?.response?.data?.error || err?.message || 'Photo upload failed'
+      throw err
+    }
+  }
+
   return {
     profile,
     errorMessage,
@@ -94,6 +112,7 @@ export const useWeddingProfileStore = defineStore('weddingProfile', () => {
     fetchWeddingProfile,
     createWeddingProfile,
     updateWeddingProfile,
+    uploadPhoto,
     clearError,
     setProfile
   }

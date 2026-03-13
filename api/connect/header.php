@@ -20,6 +20,7 @@ if (preg_match('/^\s*Bearer\s+(\S+)\s*$/i', $authHeader, $m)) {
 header("Content-Type: application/json");
 session_start();
 include("connect.php");
+include("permissions.php");
 error_reporting(1);
 
 $method = $_SERVER['REQUEST_METHOD'];
@@ -27,6 +28,15 @@ $rawInput = file_get_contents('php://input');
 $input = $rawInput ? json_decode($rawInput, true) : [];
 if (!is_array($input)) {
     $input = [];
+}
+// For DELETE, some servers don't pass body; allow query params as fallback
+if ($method === 'DELETE' && empty($input) && !empty($_GET)) {
+    if (isset($_GET['member_id']) || isset($_GET['role_id'])) {
+        $input = [
+            'member_id' => isset($_GET['member_id']) ? (int) $_GET['member_id'] : 0,
+            'role_id'   => isset($_GET['role_id'])   ? (int) $_GET['role_id']   : 0,
+        ];
+    }
 }
 
 // CORS: allow common dev origins (Vite uses 5173 or 5174)
@@ -38,4 +48,6 @@ if (in_array($origin, $allowed, true)) {
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS");
 header("Access-Control-Allow-Headers: Content-Type, Authorization");
 header("Access-Control-Max-Age: 86400");
+
+$scopeUserId = function_exists('wmis_get_scope_user_id') ? wmis_get_scope_user_id($dbh) : (isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0);
 ?>

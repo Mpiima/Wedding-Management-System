@@ -3,6 +3,8 @@
  * Vendor contracts API: list, create, update, delete. User-scoped; vendor_id required.
  */
 include("connect/header.php");
+include_once(__DIR__ . '/lib/EmailHelper.php');
+include_once(__DIR__ . '/lib/EmailTemplates.php');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') exit(0);
 if (!isset($_SESSION['user_id'])) { http_response_code(401); echo json_encode(['error' => 'Unauthorized']); exit; }
 $userId = (int) $_SESSION['user_id'];
@@ -69,8 +71,23 @@ function createContract($dbh, $userId, $input) {
         $f = $dbh->prepare("SELECT c.id, c.vendor_id, c.title, c.description, c.contract_date, c.amount, c.paid_amount, c.status, c.notes, c.created_at, v.name AS vendor_name FROM vendor_contracts c INNER JOIN vendors v ON v.id = c.vendor_id WHERE c.id = :id LIMIT 1");
         $f->bindValue(':id', $id, PDO::PARAM_INT);
         $f->execute();
+        $data = $f->fetch(PDO::FETCH_OBJ);
+        try {
+            if (in_array($data->status ?? '', ['Signed', 'Completed'], true) && function_exists('wmis_send_email') && function_exists('wmis_email_contract_signed')) {
+                $v = $dbh->prepare("SELECT name, contact_person, email FROM vendors WHERE id = :id LIMIT 1");
+                $v->bindValue(':id', $data->vendor_id, PDO::PARAM_INT);
+                $v->execute();
+                $vendor = $v->fetch(PDO::FETCH_OBJ);
+                if ($vendor && trim($vendor->email ?? '') !== '' && filter_var(trim($vendor->email), FILTER_VALIDATE_EMAIL)) {
+                    $name = trim($vendor->contact_person ?? $vendor->name ?? '');
+                    if ($name === '') $name = $vendor->name ?? 'Vendor';
+                    $tpl = wmis_email_contract_signed($name, $data->title, $data->description ?? '');
+                    wmis_send_email($dbh, trim($vendor->email), $tpl['subject'], $tpl['body']);
+                }
+            }
+        } catch (Exception $e) { error_log('Vendor contract email: ' . $e->getMessage()); }
         http_response_code(201);
-        echo json_encode(['message' => 'Contract created', 'data' => $f->fetch(PDO::FETCH_OBJ)]);
+        echo json_encode(['message' => 'Contract created', 'data' => $data]);
     } catch (PDOException $e) { error_log('Vendor contract create: ' . $e->getMessage()); http_response_code(500); echo json_encode(['error' => 'An error occurred']); }
 }
 
@@ -104,7 +121,24 @@ function updateContract($dbh, $userId, $input) {
     $f = $dbh->prepare("SELECT c.id, c.vendor_id, c.title, c.description, c.contract_date, c.amount, c.paid_amount, c.status, c.notes, c.created_at, v.name AS vendor_name FROM vendor_contracts c INNER JOIN vendors v ON v.id = c.vendor_id WHERE c.id = :id LIMIT 1");
     $f->bindValue(':id', $id, PDO::PARAM_INT);
     $f->execute();
-    echo json_encode(['message' => 'Updated', 'data' => $f->fetch(PDO::FETCH_OBJ)]);
+    $data = $f->fetch(PDO::FETCH_OBJ);
+    if ($data && in_array($data->status ?? '', ['Signed', 'Completed'], true)) {
+        try {
+            if (function_exists('wmis_send_email') && function_exists('wmis_email_contract_signed')) {
+                $v = $dbh->prepare("SELECT name, contact_person, email FROM vendors WHERE id = :id LIMIT 1");
+                $v->bindValue(':id', $data->vendor_id, PDO::PARAM_INT);
+                $v->execute();
+                $vendor = $v->fetch(PDO::FETCH_OBJ);
+                if ($vendor && trim($vendor->email ?? '') !== '' && filter_var(trim($vendor->email), FILTER_VALIDATE_EMAIL)) {
+                    $name = trim($vendor->contact_person ?? $vendor->name ?? '');
+                    if ($name === '') $name = $vendor->name ?? 'Vendor';
+                    $tpl = wmis_email_contract_signed($name, $data->title, $data->description ?? '');
+                    wmis_send_email($dbh, trim($vendor->email), $tpl['subject'], $tpl['body']);
+                }
+            }
+        } catch (Exception $e) { error_log('Vendor contract email: ' . $e->getMessage()); }
+    }
+    echo json_encode(['message' => 'Updated', 'data' => $data]);
 }
 
 function deleteContract($dbh, $userId, $input) {

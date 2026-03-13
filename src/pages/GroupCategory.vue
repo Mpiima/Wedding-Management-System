@@ -5,7 +5,7 @@
         <h1 class="font-display text-2xl font-semibold tracking-tight text-wmis-text">Group Category</h1>
         <p class="text-sm text-gray-500">Organise guests and members into groups (e.g. Family, Friends, Colleagues)</p>
       </div>
-      <button type="button" class="btn-primary" @click="openModal()">+ Add category</button>
+      <button v-if="authStore.can('group_categories.add')" type="button" class="btn-primary" @click="openModal()">+ Add category</button>
     </div>
 
     <p v-if="store.errorMessage" class="text-sm text-rose-600 bg-rose-50 rounded-xl px-4 py-2">{{ store.errorMessage }}</p>
@@ -14,8 +14,8 @@
       <template #cell-description="{ value }">{{ value || '—' }}</template>
       <template #cell-count="{ row }">{{ memberCount(row.id) }} members</template>
       <template #actions="{ row }">
-        <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium mr-2" @click="openModal(row)">Edit</button>
-        <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium" @click="confirmDelete(row)">Remove</button>
+        <button v-if="authStore.can('group_categories.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium mr-2" @click="openModal(row)">Edit</button>
+        <button v-if="authStore.can('group_categories.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium" @click="confirmDelete(row)">Remove</button>
       </template>
     </TableComponent>
 
@@ -51,9 +51,11 @@ import ModalComponent from '@/components/ModalComponent.vue'
 import FormInput from '@/components/FormInput.vue'
 import { useGroupCategoriesStore } from '@/stores/groupCategories'
 import { useMembersStore } from '@/stores/members'
+import { useAuthStore } from '@/stores/auth'
 
 const store = useGroupCategoriesStore()
 const membersStore = useMembersStore()
+const authStore = useAuthStore()
 
 const showModal = ref(false)
 const showDeleteModal = ref(false)

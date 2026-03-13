@@ -19,19 +19,40 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $userId = (int) $_SESSION['user_id'];
+$scopeUserId = isset($scopeUserId) ? (int) $scopeUserId : $userId;
 
 switch ($method) {
     case 'GET':
-        listCategories($dbh, $userId);
+        if (!wmis_has_permission($dbh, 'budget.view')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to view budget']);
+            exit;
+        }
+        listCategories($dbh, $scopeUserId);
         break;
     case 'POST':
-        createCategory($dbh, $userId, $input);
+        if (!wmis_has_permission($dbh, 'budget.add')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to add budget']);
+            exit;
+        }
+        createCategory($dbh, $scopeUserId, $input);
         break;
     case 'PUT':
-        updateCategory($dbh, $userId, $input);
+        if (!wmis_has_permission($dbh, 'budget.edit')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to edit budget']);
+            exit;
+        }
+        updateCategory($dbh, $scopeUserId, $input);
         break;
     case 'DELETE':
-        deleteCategory($dbh, $userId, $input);
+        if (!wmis_has_permission($dbh, 'budget.delete')) {
+            http_response_code(403);
+            echo json_encode(['error' => 'You do not have permission to delete budget']);
+            exit;
+        }
+        deleteCategory($dbh, $scopeUserId, $input);
         break;
     default:
         http_response_code(405);

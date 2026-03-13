@@ -5,7 +5,7 @@
         <h1 class="text-xl font-semibold text-wmis-text">Budget Management</h1>
         <p class="text-sm text-gray-500">Categories and items — total from items, progress from COVERED status</p>
       </div>
-      <div class="flex gap-2">
+      <div v-if="authStore.can('budget.add')" class="flex gap-2">
         <button
           type="button"
           class="inline-flex items-center gap-2 rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-600 shadow-soft transition hover:bg-rose-50"
@@ -63,11 +63,11 @@
         <span class="text-gray-500">{{ value || '—' }}</span>
       </template>
       <template #actions="{ row }">
-        <div class="flex items-center justify-end gap-2">
-          <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openCategoryModal(row)">
+        <div v-if="authStore.can('budget.edit') || authStore.can('budget.delete')" class="flex items-center justify-end gap-2">
+          <button v-if="authStore.can('budget.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openCategoryModal(row)">
             Edit
           </button>
-          <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium" @click="confirmDeleteCategory(row)">
+          <button v-if="authStore.can('budget.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium" @click="confirmDeleteCategory(row)">
             Delete
           </button>
         </div>
@@ -78,13 +78,33 @@
     <TableComponent
       title="Budget items"
       :columns="itemColumns"
-      :data="itemStore.items"
+      :data="filteredItems"
       row-key="id"
       :pagination="true"
       :page-size="8"
       v-model:current-page="itemPage"
       empty="No items yet"
     >
+      <template #toolbar>
+        <TableToolbar
+          v-model:search-query="itemSearchQuery"
+          :export-disabled="!filteredItems.length"
+          @export-excel="exportItemsExcel"
+          @export-pdf="exportItemsPdf"
+        >
+          <template #filters>
+            <select v-model="itemFilterCategory" class="rounded-xl border border-rose-100 px-3 py-2 text-sm focus:border-rose-400 focus:ring-2 focus:ring-rose-500/20">
+              <option value="">All categories</option>
+              <option v-for="c in categoryStore.categories" :key="c.id" :value="c.id">{{ c.name }}</option>
+            </select>
+            <select v-model="itemFilterStatus" class="rounded-xl border border-rose-100 px-3 py-2 text-sm focus:border-rose-400 focus:ring-2 focus:ring-rose-500/20">
+              <option value="">All statuses</option>
+              <option value="COVERED">Covered</option>
+              <option value="NOT_COVERED">Not covered</option>
+            </select>
+          </template>
+        </TableToolbar>
+      </template>
       <template #cell-budget_category_id="{ value }">{{ categoryName(value) }}</template>
       <template #cell-quantity="{ value }">{{ Number(value) }}</template>
       <template #cell-unit_amount="{ value }">{{ formatUgx(value) }}</template>
@@ -97,12 +117,18 @@
           {{ value === 'COVERED' ? 'Covered' : 'Not covered' }}
         </span>
       </template>
+      <template #cell-covered_type="{ row }">
+        <span v-if="row.status === 'COVERED'" class="text-gray-600 text-sm">
+          {{ row.covered_type === 'FROM_CONTRIBUTIONS' ? 'From contributions' : 'By default (not from contributions)' }}
+        </span>
+        <span v-else class="text-gray-400">—</span>
+      </template>
       <template #actions="{ row }">
-        <div class="flex items-center justify-end gap-2">
-          <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openItemModal(row)">
+        <div v-if="authStore.can('budget.edit') || authStore.can('budget.delete')" class="flex items-center justify-end gap-2">
+          <button v-if="authStore.can('budget.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openItemModal(row)">
             Edit
           </button>
-          <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium" @click="confirmDeleteItem(row)">
+          <button v-if="authStore.can('budget.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium" @click="confirmDeleteItem(row)">
             Delete
           </button>
         </div>
@@ -197,6 +223,16 @@
             <option value="COVERED">Covered</option>
           </select>
         </div>
+        <div v-if="itemForm.status === 'COVERED'" class="space-y-1">
+          <label class="block text-sm font-medium text-gray-700">Covered type</label>
+          <select
+            v-model="itemForm.covered_type"
+            class="block w-full rounded-xl border border-rose-100 bg-rose-50/20 px-4 py-2.5 text-sm focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+          >
+            <option value="DEFAULT">Covered by default (not from contributions)</option>
+            <option value="FROM_CONTRIBUTIONS">Covered from contributions</option>
+          </select>
+        </div>
         <p v-if="itemStore.errorMessage" class="text-sm text-rose-600">{{ itemStore.errorMessage }}</p>
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" class="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50" @click="showItemModal = false">
@@ -245,16 +281,23 @@
 import { ref, reactive, computed, onMounted } from 'vue'
 import ProgressCard from '@/components/ProgressCard.vue'
 import TableComponent from '@/components/TableComponent.vue'
+import TableToolbar from '@/components/TableToolbar.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import FormInput from '@/components/FormInput.vue'
 import { useBudgetCategoriesStore } from '@/stores/budgetCategories'
 import { useBudgetItemsStore } from '@/stores/budgetItems'
+import { useAuthStore } from '@/stores/auth'
+import { useTableExport } from '@/composables/useTableExport'
 
 const categoryStore = useBudgetCategoriesStore()
 const itemStore = useBudgetItemsStore()
+const authStore = useAuthStore()
 
 const categoryPage = ref(1)
 const itemPage = ref(1)
+const itemSearchQuery = ref('')
+const itemFilterCategory = ref('')
+const itemFilterStatus = ref('')
 const showCategoryModal = ref(false)
 const showItemModal = ref(false)
 const showDeleteCategoryModal = ref(false)
@@ -281,7 +324,8 @@ const itemColumns = [
   { key: 'quantity', label: 'Qty' },
   { key: 'unit_amount', label: 'Unit amount' },
   { key: 'cost', label: 'Cost' },
-  { key: 'status', label: 'Status' }
+  { key: 'status', label: 'Status' },
+  { key: 'covered_type', label: 'Covered type' }
 ]
 
 const categoryForm = reactive({ name: '', description: '' })
@@ -292,7 +336,8 @@ const itemForm = reactive({
   item_name: '',
   quantity: 1,
   unit_amount: 0,
-  status: 'NOT_COVERED'
+  status: 'NOT_COVERED',
+  covered_type: 'DEFAULT'
 })
 const itemErrors = reactive({ budget_category_id: '', item_name: '', quantity: '', unit_amount: '' })
 
@@ -318,6 +363,55 @@ function categoryProgress(cat) {
 function categoryName(categoryId) {
   const c = categoryStore.categories.find((x) => Number(x.id) === Number(categoryId))
   return c ? c.name : '—'
+}
+
+const itemExportColumns = [
+  { key: 'category_name', label: 'Category' },
+  { key: 'item_name', label: 'Item' },
+  { key: 'quantity', label: 'Qty' },
+  { key: 'unit_amount', label: 'Unit amount' },
+  { key: 'cost', label: 'Cost' },
+  { key: 'status_label', label: 'Status' },
+  { key: 'covered_type_label', label: 'Covered type' }
+]
+const { exportToExcel, exportToPdf } = useTableExport(itemExportColumns, 'Budget items')
+
+const filteredItems = computed(() => {
+  let list = itemStore.items || []
+  const q = (itemSearchQuery.value || '').trim().toLowerCase()
+  if (q) {
+    list = list.filter((i) => {
+      const name = (i.item_name || '').toLowerCase()
+      const catName = (categoryName(i.budget_category_id) || '').toLowerCase()
+      return name.includes(q) || catName.includes(q)
+    })
+  }
+  if (itemFilterCategory.value) list = list.filter((i) => Number(i.budget_category_id) === Number(itemFilterCategory.value))
+  if (itemFilterStatus.value) list = list.filter((i) => (i.status || '') === itemFilterStatus.value)
+  return list
+})
+
+function itemsForExport() {
+  return filteredItems.value.map((i) => ({
+    ...i,
+    category_name: categoryName(i.budget_category_id),
+    status_label: i.status === 'COVERED' ? 'Covered' : 'Not covered',
+    covered_type_label: i.status === 'COVERED' ? (i.covered_type === 'FROM_CONTRIBUTIONS' ? 'From contributions' : 'By default') : '—'
+  }))
+}
+function budgetPdfStatistics() {
+  const items = filteredItems.value
+  const totalAmount = items.reduce((sum, i) => sum + (Number(i.cost) || 0), 0)
+  return [
+    { label: 'Total amount', value: formatUgx(totalAmount) },
+    { label: 'Number of items', value: String(items.length) }
+  ]
+}
+function exportItemsExcel() {
+  exportToExcel(itemsForExport(), 'budget-items')
+}
+function exportItemsPdf() {
+  exportToPdf(itemsForExport(), 'budget-items', budgetPdfStatistics())
 }
 
 const itemCost = computed(() => {
@@ -400,6 +494,9 @@ function openItemModal(row = null) {
     itemForm.quantity = Number(row.quantity) || 1
     itemForm.unit_amount = Number(row.unit_amount) || 0
     itemForm.status = row.status === 'COVERED' ? 'COVERED' : 'NOT_COVERED'
+    itemForm.covered_type = (row.status === 'COVERED' && (row.covered_type === 'FROM_CONTRIBUTIONS' || row.covered_type === 'DEFAULT'))
+      ? row.covered_type
+      : 'DEFAULT'
   } else {
     editingItemId.value = null
     itemForm.budget_category_id = categoryStore.categories.length ? categoryStore.categories[0].id : ''
@@ -407,6 +504,7 @@ function openItemModal(row = null) {
     itemForm.quantity = 1
     itemForm.unit_amount = 0
     itemForm.status = 'NOT_COVERED'
+    itemForm.covered_type = 'DEFAULT'
   }
   showItemModal.value = true
 }
@@ -446,7 +544,8 @@ async function saveItem() {
         item_name: itemForm.item_name.trim(),
         quantity: qty,
         unit_amount: ua,
-        status: itemForm.status
+        status: itemForm.status,
+        covered_type: itemForm.status === 'COVERED' ? itemForm.covered_type : null
       })
     } else {
       await itemStore.createItem({
@@ -454,7 +553,8 @@ async function saveItem() {
         item_name: itemForm.item_name.trim(),
         quantity: qty,
         unit_amount: ua,
-        status: itemForm.status
+        status: itemForm.status,
+        covered_type: itemForm.status === 'COVERED' ? itemForm.covered_type : null
       })
     }
     showItemModal.value = false

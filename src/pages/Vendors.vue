@@ -5,7 +5,7 @@
         <h1 class="text-xl font-semibold text-wmis-text">Service Providers</h1>
         <p class="text-sm text-gray-500">Vendor list, categories, and contact info</p>
       </div>
-      <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-rose-600" @click="openForm()">+ Add vendor</button>
+      <button v-if="authStore.can('vendors.add')" type="button" class="inline-flex items-center gap-2 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white shadow-soft hover:bg-rose-600" @click="openForm()">+ Add vendor</button>
     </div>
     <p v-if="vendorsStore.errorMessage" class="rounded-xl bg-rose-50 px-4 py-2 text-sm text-rose-700">{{ vendorsStore.errorMessage }}</p>
     <TableComponent title="Vendors" :columns="columns" :data="vendorsStore.vendors" row-key="id" empty="No vendors yet">
@@ -14,8 +14,8 @@
         <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium" :class="value === 'Booked' ? 'bg-emerald-100 text-emerald-700' : value === 'Completed' ? 'bg-gray-100 text-gray-600' : 'bg-amber-100 text-amber-700'">{{ value }}</span>
       </template>
       <template #actions="{ row }">
-        <button type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openForm(row)">Edit</button>
-        <button type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
+        <button v-if="authStore.can('vendors.edit')" type="button" class="text-rose-500 hover:text-rose-600 text-xs font-medium" @click="openForm(row)">Edit</button>
+        <button v-if="authStore.can('vendors.delete')" type="button" class="text-gray-500 hover:text-rose-600 text-xs font-medium ml-2" @click="confirmDelete(row)">Delete</button>
       </template>
     </TableComponent>
     <ModalComponent v-model="showModal" :title="editingId ? 'Edit vendor' : 'Add vendor'">
@@ -50,8 +50,10 @@ import TableComponent from '@/components/TableComponent.vue'
 import ModalComponent from '@/components/ModalComponent.vue'
 import FormInput from '@/components/FormInput.vue'
 import { useVendorsStore } from '@/stores/vendors'
+import { useAuthStore } from '@/stores/auth'
 
 const vendorsStore = useVendorsStore()
+const authStore = useAuthStore()
 const showModal = ref(false)
 const editingId = ref(null)
 const form = ref({ name: '', category: '', contact_person: '', email: '', phone: '', status: 'Considering' })
