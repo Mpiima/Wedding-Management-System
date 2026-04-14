@@ -1,0 +1,203 @@
+{
+  "schools": [
+    {
+      "id": "sch-1001",
+      "name": "Springfield Academy",
+      "contactEmail": "admin@springfield.ac",
+      "planId": "plan-pro",
+      "status": "Active",
+      "studentsCount": 1200,
+      "createdAt": "2025-11-15"
+    },
+    {
+      "id": "sch-1002",
+      "name": "Kampala Horizon School",
+      "contactEmail": "billing@horizon.sch",
+      "planId": "plan-basic",
+      "status": "Trial",
+      "studentsCount": 450,
+      "createdAt": "2026-02-01"
+    },
+    {
+      "id": "sch-1003",
+      "name": "Nileview International",
+      "contactEmail": "finance@nileview.edu",
+      "planId": "plan-enterprise",
+      "status": "Suspended",
+      "studentsCount": 980,
+      "createdAt": "2025-08-20"
+    },
+    {
+      "id": "sch-1004",
+      "name": "Lakewood Preparatory",
+      "contactEmail": "office@lakewoodprep.edu",
+      "planId": "plan-pro",
+      "status": "Active",
+      "studentsCount": 760,
+      "createdAt": "2026-01-10"
+    },
+    {
+      "id": "sch-1005",
+      "name": "St. Mark's Learning Centre",
+      "contactEmail": "registrar@stmarks.edu",
+      "planId": "plan-basic",
+      "status": "Active",
+      "studentsCount": 310,
+      "createdAt": "2026-03-05"
+    }
+  ],
+  "payments": [
+    {
+      "id": "pay-9001",
+      "date": "2026-01-28",
+      "schoolId": "sch-1001",
+      "planId": "plan-pro",
+      "amount": 4999,
+      "status": "Paid",
+      "reference": "INV-2026-01-0081"
+    },
+    {
+      "id": "pay-9002",
+      "date": "2026-01-31",
+      "schoolId": "sch-1003",
+      "planId": "plan-enterprise",
+      "amount": 9999,
+      "status": "Paid",
+      "reference": "INV-2026-01-0092"
+    },
+    {
+      "id": "pay-9003",
+      "date": "2026-02-02",
+      "schoolId": "sch-1001",
+      "planId": "plan-pro",
+      "amount": 4999,
+      "status": "Paid",
+      "reference": "INV-2026-02-0104"
+    },
+    {
+      "id": "pay-9004",
+      "date": "2026-02-18",
+      "schoolId": "sch-1002",
+      "planId": "plan-basic",
+      "amount": 1999,
+      "status": "Paid",
+      "reference": "TRIAL-INV-02-1122"
+    },
+    {
+      "id": "pay-9005",
+      "date": "2026-02-25",
+      "schoolId": "sch-1004",
+      "planId": "plan-pro",
+      "amount": 4999,
+      "status": "Paid",
+      "reference": "INV-2026-02-0109"
+    },
+    {
+      "id": "pay-9006",
+      "date": "2026-03-03",
+      "schoolId": "sch-1001",
+      "planId": "plan-pro",
+      "amount": 4999,
+      "status": "Paid",
+      "reference": "INV-2026-03-0117"
+    },
+    {
+      "id": "pay-9007",
+      "date": "2026-03-12",
+      "schoolId": "sch-1002",
+      "planId": "plan-basic",
+      "amount": 1999,
+      "status": "Paid",
+      "reference": "INV-2026-03-0121"
+    },
+    {
+      "id": "pay-9008",
+      "date": "2026-03-21",
+      "schoolId": "sch-1004",
+      "planId": "plan-pro",
+      "amount": 4999,
+      "status": "Paid",
+      "reference": "INV-2026-03-0129"
+    }
+  ],
+  "support": {
+    "activityLogs": [
+      {
+        "id": "log-5001",
+        "time": "2026-03-18 10:11",
+        "actor": "System",
+        "action": "PAYMENT_CONFIRMED",
+        "detail": "Payment INV-2026-03-0121 confirmed for Kampala Horizon School"
+      },
+      {
+        "id": "log-5002",
+        "time": "2026-03-15 14:02",
+        "actor": "SuperAdmin",
+        "action": "SCHOOL_SUSPENDED",
+        "detail": "Suspended Nileview International due to billing verification"
+      },
+      {
+        "id": "log-5003",
+        "time": "2026-03-10 09:30",
+        "actor": "SuperAdmin",
+        "action": "PLAN_ASSIGNED",
+        "detail": "Assigned Pro plan to Lakewood Preparatory"
+      }
+    ],
+    "loginHistory": [
+      {
+        "id": "login-6001",
+        "time": "2026-03-19 08:22",
+        "user": "owner@horizon.sch",
+        "ip": "41.223.12.9",
+        "status": "Success"
+      },
+      {
+        "id": "login-6002",
+        "time": "2026-03-17 18:41",
+        "user": "owner@springfield.ac",
+        "ip": "102.89.44.2",
+        "status": "Success"
+      },
+      {
+        "id": "login-6003",
+        "time": "2026-03-16 13:05",
+        "user": "admin@nileview.edu",
+        "ip": "102.89.44.88",
+        "status": "Failed"
+      }
+    ]
+  },
+  "settings": {
+    "globalConfigs": {
+      "currency": "UGX",
+      "timeZone": "Africa/Kampala",
+      "defaultPlanId": "plan-basic"
+    },
+    "smsSettings": {
+      "enabled": true,
+      "provider": "MockSMSProvider",
+      "senderId": "SC360"
+    },
+    "paymentIntegration": {
+      "stripeEnabled": false,
+      "paystackEnabled": true,
+      "providerMode": "sandbox"
+    }
+  },
+  "analytics": {
+    "systemUsage": {
+      "labels": ["W1", "W2", "W3", "W4", "W5", "W6"],
+      "values": [1200, 1480, 1320, 1710, 1890, 2060]
+    },
+    "activeSchools": {
+      "labels": ["Jan", "Feb", "Mar"],
+      "values": [3, 4, 4]
+    },
+    "featureUsage": {
+      "labels": ["Canteen", "Permits", "Attendance", "Reports"],
+      "values": [68, 54, 91, 73]
+    }
+  }
+}
+

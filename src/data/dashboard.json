@@ -1,0 +1,22 @@
+{
+  "summaryCards": [
+    { "id": "totalStudents", "label": "Total students", "value": 1248, "subtext": "Active enrolment", "trend": "+3.2%" },
+    { "id": "feesCollected", "label": "Fees collected", "value": 482000, "subtext": "This term (UGX)", "trend": "+8%" },
+    { "id": "outstandingFees", "label": "Outstanding fees", "value": 94200, "subtext": "Awaiting payment", "trend": "-2.1%" },
+    { "id": "attendanceToday", "label": "Attendance today", "value": "94%", "subtext": "School-wide", "trend": "+0.4%" }
+  ],
+  "feesCollectionMonthly": {
+    "labels": ["Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "values": [120, 145, 132, 168, 155, 178]
+  },
+  "studentPerformance": {
+    "labels": ["S1", "S2", "S3", "S4"],
+    "values": [72, 76, 81, 79]
+  },
+  "recentActivity": [
+    { "id": "1", "time": "09:12", "action": "Payment received", "detail": "INV-2403 — UGX 120,000" },
+    { "id": "2", "time": "08:45", "action": "Attendance submitted", "detail": "S3-A — Morning register" },
+    { "id": "3", "time": "Yesterday", "action": "New admission", "detail": "STU-1102 — Amina K." },
+    { "id": "4", "time": "Yesterday", "action": "Marks published", "detail": "Mid-term Mathematics — S3" }
+  ]
+}

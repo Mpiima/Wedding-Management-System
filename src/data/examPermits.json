@@ -1,0 +1,39 @@
+{
+  "exam": {
+    "id": "EX-TERM2",
+    "name": "Term 2 Mid-year Exams",
+    "date": "2026-04-05",
+    "startTime": "09:00 AM",
+    "location": "Kampala Campus — Main Hall"
+  },
+  "permits": [
+    {
+      "id": "EP-001",
+      "studentId": "c1",
+      "studentName": "Amina Nakato",
+      "admissionNo": "ADM-1042",
+      "studentClass": "Senior 3 — Science",
+      "feeStatus": "Paid",
+      "permitStatus": "Pending"
+    },
+    {
+      "id": "EP-002",
+      "studentId": "c2",
+      "studentName": "Joel Okello",
+      "admissionNo": "ADM-2108",
+      "studentClass": "Senior 1 — Arts",
+      "feeStatus": "Partial",
+      "permitStatus": "Eligible"
+    },
+    {
+      "id": "EP-003",
+      "studentId": "c3",
+      "studentName": "Grace Nanteza",
+      "admissionNo": "ADM-3311",
+      "studentClass": "Senior 2 — General",
+      "feeStatus": "Unpaid",
+      "permitStatus": "Blocked"
+    }
+  ]
+}
+

@@ -1,0 +1,31 @@
+USE `schpro`;
+
+CREATE TABLE IF NOT EXISTS `school_onboarding` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `school_number` VARCHAR(64) NOT NULL,
+  `school_name` VARCHAR(255) NOT NULL,
+  `admin_name` VARCHAR(255) NOT NULL,
+  `admin_email` VARCHAR(255) NOT NULL,
+  `phone` VARCHAR(64) DEFAULT NULL,
+  `plan_code` VARCHAR(64) DEFAULT 'professional',
+  `curriculum_code` ENUM('local_based','cambridge_international') NOT NULL DEFAULT 'local_based',
+  `expected_students` INT DEFAULT 0,
+  `status` ENUM('pending','approved','rejected') NOT NULL DEFAULT 'pending',
+  `rejection_reason` VARCHAR(500) DEFAULT NULL,
+  `approved_by` VARCHAR(64) DEFAULT NULL,
+  `approved_at` DATETIME DEFAULT NULL,
+  `setup_completed` TINYINT(1) NOT NULL DEFAULT 0,
+  `logo_url` VARCHAR(500) DEFAULT NULL,
+  `school_motto` VARCHAR(255) DEFAULT NULL,
+  `about_info` TEXT DEFAULT NULL,
+  `address` VARCHAR(255) DEFAULT NULL,
+  `contact_email` VARCHAR(255) DEFAULT NULL,
+  `contact_phone` VARCHAR(64) DEFAULT NULL,
+  `principal_name` VARCHAR(255) DEFAULT NULL,
+  `updated_at` TIMESTAMP NULL DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `school_onboarding_school_number_unique` (`school_number`),
+  UNIQUE KEY `school_onboarding_admin_email_unique` (`admin_email`),
+  KEY `school_onboarding_status_idx` (`status`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;

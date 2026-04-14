@@ -1,0 +1,9 @@
+{
+  "exam": "Mid-term — Mathematics",
+  "grade": "S3-A",
+  "students": [
+    { "id": "STU-1001", "name": "Amina Nakato", "math": 82, "eng": 76, "bio": 71 },
+    { "id": "STU-1005", "name": "Grace Achieng", "math": 90, "eng": 88, "bio": 85 },
+    { "id": "STU-1006", "name": "Daniel Ssemwogerere", "math": 65, "eng": 70, "bio": 68 }
+  ]
+}

@@ -1,212 +1,212 @@
 <template>
-  <div class="space-y-8">
-    <div class="flex flex-col gap-1">
-      <h1 class="font-display text-2xl font-semibold tracking-tight text-wmis-text">Dashboard</h1>
-      <p class="text-sm text-gray-500">Wedding overview and recent activity</p>
+  <div class="page-shell max-w-[1600px]">
+    <PageHeader :title="'Dashboard'" :description="headerDescription">
+      <template #actions>
+        <Button variant="secondary" :disabled="loading" @click="reload">Refresh</Button>
+        <Button variant="secondary" type="button" @click="goFinance">Finance overview</Button>
+        <Button type="button" @click="goAdmissions">Admissions</Button>
+      </template>
+    </PageHeader>
+
+    <div
+      v-if="meta && !meta.hasActivePeriod"
+      class="mb-6 rounded-2xl border border-amber-200 bg-amber-50/90 px-4 py-3 text-sm text-amber-950"
+    >
+      <span class="font-semibold">Academic context not set.</span>
+      Choose an active academic year and study period under Academic setup so enrolment and fee totals apply to the right term.
     </div>
 
-    <!-- Wedding profile & countdown card -->
-    <div
-      v-if="weddingProfile"
-      class="rounded-2xl border border-rose-100/60 bg-gradient-to-br from-white via-rose-50/30 to-gold-50/20 p-6 shadow-card overflow-hidden"
-    >
-      <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div class="min-w-0">
-          <p class="text-[11px] font-semibold uppercase tracking-[0.2em] text-gray-500">Our Wedding</p>
-          <h2 class="font-display text-xl sm:text-2xl font-semibold text-wmis-text mt-1">
-            {{ weddingProfile.bride_name && weddingProfile.groom_name ? `${weddingProfile.bride_name} & ${weddingProfile.groom_name}` : (weddingProfile.bride_name || weddingProfile.groom_name || 'Our wedding') }}
-          </h2>
-          <p v-if="weddingProfile.venue_name" class="text-sm text-gray-600 mt-1">{{ weddingProfile.venue_name }}</p>
-          <p v-if="weddingProfile.wedding_date" class="text-sm text-gray-500 mt-0.5">
-            {{ formatWeddingDate(weddingProfile.wedding_date) }}
-          </p>
+    <div v-if="loadError" class="mb-6 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+      {{ loadError }}
+      <button type="button" class="ml-2 font-semibold underline" @click="reload">Retry</button>
+    </div>
+
+    <div v-if="loading" class="flex flex-col items-center justify-center py-20 text-slate-500">
+      <svg class="h-8 w-8 animate-spin text-brand-600" fill="none" viewBox="0 0 24 24">
+        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+      <p class="mt-3 text-sm">Loading dashboard…</p>
+    </div>
+
+    <template v-else>
+      <!-- KPIs -->
+      <section aria-label="Key metrics" class="mb-8">
+        <h2 class="mb-3 text-2xs font-semibold uppercase tracking-wider text-slate-500">Overview</h2>
+        <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-5">
+          <StatCard
+            v-for="s in summaryCards"
+            :key="s.id"
+            :label="s.label"
+            :value="s.value"
+            :subtext="s.subtext"
+            :trend="s.trend || ''"
+            :animate="typeof s.value === 'number' && s.format !== 'currency'"
+            :formatter="formatterFor(s)"
+            :icon="iconFor(s.id)"
+          />
         </div>
-        <div class="flex-shrink-0 flex items-center gap-4">
-          <div class="rounded-2xl bg-white/80 border border-rose-100/80 px-5 py-4 shadow-inner-gold">
-            <WeddingCountdown :date="weddingProfile.wedding_date" />
-          </div>
-          <router-link
-            to="/settings/profile"
-            class="rounded-xl border border-rose-200 bg-white px-4 py-2.5 text-sm font-medium text-rose-600 hover:bg-rose-50 transition-all"
+      </section>
+
+      <!-- Charts -->
+      <section aria-label="Charts" class="mb-8">
+        <h2 class="mb-3 text-2xs font-semibold uppercase tracking-wider text-slate-500">Trends</h2>
+        <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <BarChart
+            v-if="feesChart.labels.length"
+            title="Fee receipts"
+            :subtitle="feesChartSubtitle"
+            :labels="feesChart.labels"
+            :values="feesChart.values"
+          />
+          <div
+            v-else
+            class="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-sc-border bg-slate-50/80 p-8 text-center text-sm text-slate-600"
           >
-            Edit profile
-          </router-link>
-        </div>
-      </div>
-    </div>
-    <div
-      v-else
-      class="rounded-2xl border border-dashed border-rose-200 bg-rose-50/30 p-6 text-center"
-    >
-      <p class="text-wmis-text font-medium">Set up your wedding profile</p>
-      <p class="text-sm text-gray-500 mt-1">Add your names, wedding date and venue to see the countdown here and in the header.</p>
-      <router-link
-        to="/settings/profile"
-        class="inline-flex mt-4 rounded-xl bg-rose-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-rose-600"
-      >
-        Create wedding profile
-      </router-link>
-    </div>
-
-    <!-- Stat cards -->
-    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-      <StatCard
-        label="Total Budget"
-        :value="budgetDisplay"
-        subtext="Planned"
-        :progress="budgetProgress"
-      />
-      <StatCard
-        label="Contributions"
-        :value="contributionsDisplay"
-        subtext="Received"
-        :progress="contributionsProgress"
-      />
-      <StatCard
-        label="Guests"
-        :value="guestTotal > 0 ? `${guestConfirmed} / ${guestTotal}` : '0'"
-        subtext="Confirmed"
-        :progress="guestProgress"
-      />
-      <StatCard
-        label="Upcoming Meetings"
-        :value="upcomingMeetingsCount"
-        subtext="Scheduled"
-        :highlight="true"
-      />
-    </div>
-
-    <div class="grid gap-6 lg:grid-cols-3">
-      <!-- Budget summary -->
-      <div class="lg:col-span-2 space-y-5">
-        <div class="card-luxury">
-          <h2 class="font-display text-base font-semibold text-wmis-text mb-5">Budget Summary</h2>
-          <div class="space-y-4">
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Planned</span>
-              <span class="font-medium text-wmis-text">{{ formatUgx(budgetPlanned) }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Spent</span>
-              <span class="font-medium text-rose-600">{{ formatUgx(budgetSpent) }}</span>
-            </div>
-            <div class="flex justify-between text-sm">
-              <span class="text-gray-500">Balance</span>
-              <span class="font-medium" :class="balance >= 0 ? 'text-emerald-600' : 'text-rose-600'">{{ formatUgx(balance) }}</span>
-            </div>
-            <div class="h-2.5 w-full rounded-full bg-rose-100/60 overflow-hidden">
-              <div
-                class="h-full rounded-full bg-gradient-to-r from-rose-400 to-rose-500 transition-all duration-700 ease-out"
-                :style="{ width: `${budgetProgress}%` }"
-              />
-            </div>
-            <p class="text-xs font-medium text-gold-600">{{ budgetProgress }}% used</p>
+            No payment data in the last six months.
+          </div>
+          <LineAreaChart
+            v-if="perfChart.labels.length"
+            title="Enrolment by level"
+            :subtitle="enrollmentChartSubtitle"
+            :labels="perfChart.labels"
+            :values="perfChart.values"
+          />
+          <div
+            v-else
+            class="flex min-h-[280px] flex-col items-center justify-center rounded-2xl border border-dashed border-sc-border bg-slate-50/80 p-8 text-center text-sm text-slate-600"
+          >
+            No enrolments for the active term, or levels are not set up yet.
           </div>
         </div>
-        <ChartCard title="Contributions progress" footer="Total received vs expenditures" />
-      </div>
+      </section>
 
-      <!-- Activity & upcoming -->
-      <div class="space-y-5">
-        <ActivityFeed :items="activities" />
-        <div class="card-luxury">
-          <h2 class="font-display text-base font-semibold text-wmis-text mb-4">Upcoming Meetings</h2>
-          <ul class="space-y-2">
-            <li
-              v-for="m in upcomingMeetingsList"
-              :key="m.id"
-              class="flex items-center gap-3 rounded-xl border border-rose-100/60 bg-gradient-to-r from-white to-rose-50/30 px-4 py-3 text-sm transition-all duration-300 hover:shadow-soft hover:border-rose-200/60"
-            >
-              <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-rose-100 to-rose-200/50 text-rose-600 text-xs font-semibold shadow-inner-gold">
-                {{ m.day }}
-              </span>
-              <div class="min-w-0 flex-1">
-                <p class="font-medium text-wmis-text">{{ m.title }}</p>
-                <p class="text-xs text-gray-500">{{ m.dateFormatted }}</p>
-              </div>
-              <span class="h-2 w-2 shrink-0 rounded-full bg-gold-400" />
-            </li>
-          </ul>
-          <p v-if="upcomingMeetingsList.length === 0" class="py-4 text-center text-sm text-gray-500">No upcoming meetings</p>
-        </div>
-      </div>
-    </div>
+      <!-- Activity -->
+      <section aria-label="Recent activity">
+        <h2 class="mb-3 text-2xs font-semibold uppercase tracking-wider text-slate-500">Recent activity</h2>
+        <DataTable
+          title="Latest payments & admissions"
+          :columns="activityColumns"
+          :data="activityRows"
+          row-key="id"
+          empty-text="No recent payments or admission updates yet."
+        />
+      </section>
+    </template>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import StatCard from '@/components/StatCard.vue'
-import ChartCard from '@/components/ChartCard.vue'
-import ActivityFeed from '@/components/ActivityFeed.vue'
-import WeddingCountdown from '@/components/WeddingCountdown.vue'
-import { useWeddingProfileStore } from '@/stores/weddingProfile'
-import { useReportsStore } from '@/stores/reports'
-import { useInvitedGuestsStore } from '@/stores/invitedGuests'
-import { useBudgetCategoriesStore } from '@/stores/budgetCategories'
-import { useMeetingMinutesStore } from '@/stores/meetingMinutes'
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
+import {
+  UserGroupIcon,
+  BanknotesIcon,
+  ExclamationTriangleIcon,
+  AcademicCapIcon,
+  UserPlusIcon
+} from '@heroicons/vue/24/outline'
+import PageHeader from '@/components/common/PageHeader.vue'
+import StatCard from '@/components/ui/StatCard.vue'
+import DataTable from '@/components/ui/DataTable.vue'
+import Button from '@/components/ui/Button.vue'
+import BarChart from '@/components/charts/BarChart.vue'
+import LineAreaChart from '@/components/charts/LineAreaChart.vue'
+import { formatCurrency } from '@/utils/formatters'
+import { dashboardApi } from '@/services/dashboardApi'
+const router = useRouter()
 
-const weddingProfile = computed(() => useWeddingProfileStore().profile)
-const reportsStore = useReportsStore()
-const guestsStore = useInvitedGuestsStore()
-const budgetStore = useBudgetCategoriesStore()
-const minutesStore = useMeetingMinutesStore()
+const loading = ref(true)
+const loadError = ref('')
+const meta = ref(null)
+const summaryCards = ref([])
+const activityRows = ref([])
+const feesChart = ref({ labels: [], values: [] })
+const perfChart = ref({ labels: [], values: [] })
 
-function formatWeddingDate(iso) {
-  if (!iso) return ''
-  const d = new Date(iso)
-  if (isNaN(d.getTime())) return iso
-  return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+const activityColumns = [
+  { key: 'time', label: 'When', sortable: true },
+  { key: 'action', label: 'Type', sortable: true },
+  { key: 'detail', label: 'Detail' }
+]
+
+const iconMap = {
+  totalStudents: UserGroupIcon,
+  enrolled: AcademicCapIcon,
+  feesCollected: BanknotesIcon,
+  outstandingFees: ExclamationTriangleIcon,
+  admissionsPipeline: UserPlusIcon
 }
 
-const budgetPlanned = computed(() => {
-  return budgetStore.categories.reduce((s, c) => s + (Number(c.planned_amount) || 0), 0)
-})
-const budgetSpent = computed(() => Number(reportsStore.report?.total_expenditures) || 0)
-const balance = computed(() => Number(reportsStore.report?.balance) ?? 0)
-const budgetProgress = computed(() => (budgetPlanned.value > 0 ? Math.min(100, Math.round((budgetSpent.value / budgetPlanned.value) * 100)) : 0))
-const budgetDisplay = computed(() => formatUgx(Math.max(0, budgetPlanned.value - budgetSpent.value)))
-
-const contributionsReceived = computed(() => Number(reportsStore.report?.total_received) || 0)
-const totalPledged = computed(() => Number(reportsStore.report?.total_pledged) || 0)
-const contributionsProgress = computed(() => (totalPledged.value > 0 ? Math.min(100, Math.round((contributionsReceived.value / totalPledged.value) * 100)) : (contributionsReceived.value > 0 ? 100 : 0)))
-const contributionsDisplay = computed(() => formatUgx(contributionsReceived.value))
-
-const guestTotal = computed(() => guestsStore.guests.length)
-const guestConfirmed = computed(() => guestsStore.guests.filter((g) => g.status === 'Confirmed').length)
-const guestProgress = computed(() => (guestTotal.value > 0 ? Math.round((guestConfirmed.value / guestTotal.value) * 100) : 0))
-
-const today = ref('')
-const upcomingMeetingsList = computed(() => {
-  if (!today.value) return []
-  return minutesStore.minutes
-    .filter((m) => m.meeting_date && m.meeting_date >= today.value)
-    .sort((a, b) => (a.meeting_date || '').localeCompare(b.meeting_date || ''))
-    .slice(0, 5)
-    .map((m) => ({
-      id: m.id,
-      title: m.title,
-      day: m.meeting_date ? new Date(m.meeting_date + 'Z').getDate() : '',
-      dateFormatted: m.meeting_date ? new Date(m.meeting_date + 'Z').toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
-    }))
-})
-const upcomingMeetingsCount = computed(() => upcomingMeetingsList.value.length)
-
-const activities = ref([
-  { id: 1, icon: '💰', title: 'Contributions', description: 'Track pledge payments and direct contributions in Reports', time: '' },
-  { id: 2, icon: '✅', title: 'Guests', description: 'Manage RSVPs in Invited Guests', time: '' },
-  { id: 3, icon: '📅', title: 'Meetings', description: 'View meeting minutes in Meeting Minutes', time: '' }
-])
-
-function formatUgx(val) {
-  return new Intl.NumberFormat('en-UG', { style: 'currency', currency: 'UGX', maximumFractionDigits: 0 }).format(val || 0)
+function iconFor(id) {
+  return iconMap[id] || UserGroupIcon
 }
 
-onMounted(() => {
-  today.value = new Date().toISOString().slice(0, 10)
-  reportsStore.fetchReport().catch(() => {})
-  guestsStore.fetchGuests().catch(() => {})
-  budgetStore.fetchCategories().catch(() => {})
-  minutesStore.fetchMinutes().catch(() => {})
+function formatterFor(card) {
+  const fmt = card?.format || 'count'
+  if (fmt === 'currency') {
+    return (n) => formatCurrency(n)
+  }
+  if (fmt === 'percent') {
+    return (n) => `${Math.round(Number(n))}%`
+  }
+  return (n) => {
+    if (typeof n !== 'number' || Number.isNaN(n)) return String(n)
+    return Math.round(n).toLocaleString()
+  }
+}
+
+const headerDescription = computed(() => {
+  const m = meta.value
+  if (m?.periodLabel) {
+    return `Snapshot for ${m.periodLabel}. Data comes from your school records (students, enrolments, invoices, payments, admissions).`
+  }
+  return 'Overview of students, enrolment, finance, and admissions — powered by your school data.'
 })
+
+const feesChartSubtitle = computed(() => 'Last six months · UGX received (all terms)')
+const enrollmentChartSubtitle = computed(() => {
+  const m = meta.value
+  if (m?.periodLabel) return `Headcount by level · ${m.periodLabel}`
+  return 'Headcount by level (active term)'
+})
+
+function goFinance() {
+  router.push('/finance/dashboard')
+}
+
+function goAdmissions() {
+  router.push('/admissions/applicants')
+}
+
+async function load() {
+  loading.value = true
+  loadError.value = ''
+  try {
+    const { data: body } = await dashboardApi.summary()
+    const d = body?.data || {}
+    meta.value = d.meta || null
+    summaryCards.value = Array.isArray(d.summaryCards) ? d.summaryCards : []
+    activityRows.value = Array.isArray(d.recentActivity) ? d.recentActivity : []
+    const charts = d.charts || {}
+    feesChart.value = charts.feesByMonth || { labels: [], values: [] }
+    perfChart.value = charts.enrollmentByLevel || { labels: [], values: [] }
+  } catch (e) {
+    const msg = e?.response?.data?.error || e?.message || 'Could not load dashboard'
+    loadError.value = typeof msg === 'string' ? msg : 'Could not load dashboard'
+    summaryCards.value = []
+    activityRows.value = []
+    feesChart.value = { labels: [], values: [] }
+    perfChart.value = { labels: [], values: [] }
+    meta.value = null
+  } finally {
+    loading.value = false
+  }
+}
+
+function reload() {
+  load()
+}
+
+onMounted(load)
 </script>

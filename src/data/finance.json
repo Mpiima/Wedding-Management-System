@@ -1,0 +1,8 @@
+{
+  "items": [
+    { "id": "INV-2401", "record": "Term fees — Grade 10", "amount": 450000, "status": "Paid", "due": "2025-01-15" },
+    { "id": "INV-2402", "record": "Lab levy — Science", "amount": 85000, "status": "Pending", "due": "2025-02-01" },
+    { "id": "INV-2403", "record": "Sports uniform", "amount": 120000, "status": "Paid", "due": "2025-01-20" },
+    { "id": "INV-2404", "record": "Library deposit", "amount": 50000, "status": "Overdue", "due": "2024-12-01" }
+  ]
+}

@@ -1,0 +1,77 @@
+{
+  "dashboard": {
+    "summary": [
+      { "label": "Children linked", "value": "2" },
+      { "label": "Outstanding fees", "value": "UGX 120,000" },
+      { "label": "Unread messages", "value": "1" },
+      { "label": "Next school event", "value": "PTA — Fri 4:00 PM" }
+    ],
+    "notices": [
+      "Term 2 fee statements are available under Fees.",
+      "Sports day: please confirm attendance for your ward(s) by Wednesday."
+    ]
+  },
+  "children": [
+    {
+      "id": "c1",
+      "name": "Amina Nakato",
+      "class": "Primary 5",
+      "admissionNo": "ADM-1042",
+      "attendancePct": 97,
+      "feesBalance": 0
+    },
+    {
+      "id": "c2",
+      "name": "Joel Okello",
+      "class": "Primary 3",
+      "admissionNo": "ADM-2108",
+      "attendancePct": 94,
+      "feesBalance": 120000
+    }
+  ],
+  "results": [
+    { "childId": "c1", "childName": "Amina Nakato", "subject": "Mathematics", "score": 82, "grade": "A" },
+    { "childId": "c1", "childName": "Amina Nakato", "subject": "Literacy I", "score": 76, "grade": "B+" },
+    { "childId": "c1", "childName": "Amina Nakato", "subject": "Integrated Science", "score": 71, "grade": "B" },
+    { "childId": "c2", "childName": "Joel Okello", "subject": "Mathematics", "score": 68, "grade": "B" },
+    { "childId": "c2", "childName": "Joel Okello", "subject": "Literacy I", "score": 72, "grade": "B" },
+    { "childId": "c2", "childName": "Joel Okello", "subject": "SST", "score": 79, "grade": "B+" }
+  ],
+  "attendance": [
+    { "childId": "c1", "childName": "Amina Nakato", "period": "March 2026", "presentDays": 19, "absentDays": 1, "ratePct": 95 },
+    { "childId": "c2", "childName": "Joel Okello", "period": "March 2026", "presentDays": 18, "absentDays": 2, "ratePct": 90 }
+  ],
+  "fees": [
+    { "id": "PF1", "childName": "Amina Nakato", "description": "Term 2 tuition", "amount": 450000, "status": "Paid" },
+    { "id": "PF2", "childName": "Joel Okello", "description": "Term 2 tuition", "amount": 450000, "status": "Partial" },
+    { "id": "PF3", "childName": "Joel Okello", "description": "Sports levy", "amount": 50000, "status": "Unpaid" }
+  ],
+  "timetableByChild": {
+    "c1": [
+      { "day": "Monday", "slots": [{ "time": "08:00", "subject": "Mathematics", "room": "P5-A" }, { "time": "10:00", "subject": "Literacy I", "room": "P5-A" }] },
+      { "day": "Tuesday", "slots": [{ "time": "08:00", "subject": "Integrated Science", "room": "P5-A" }] }
+    ],
+    "c2": [
+      { "day": "Monday", "slots": [{ "time": "08:00", "subject": "Literacy I", "room": "P3-B" }] },
+      { "day": "Wednesday", "slots": [{ "time": "09:00", "subject": "Mathematics", "room": "P3-B" }] }
+    ]
+  },
+  "messages": [
+    {
+      "id": "m1",
+      "from": "Class teacher — P5",
+      "subject": "Mid-term report ready",
+      "preview": "Please review Amina's latest performance summary.",
+      "date": "2026-03-18",
+      "unread": false
+    },
+    {
+      "id": "m2",
+      "from": "Bursar",
+      "subject": "Fee reminder — Term 2",
+      "preview": "A partial payment was recorded. Outstanding balance remains.",
+      "date": "2026-03-15",
+      "unread": true
+    }
+  ]
+}

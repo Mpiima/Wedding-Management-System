@@ -1,0 +1,9 @@
+{
+  "items": [
+    { "id": "INV-2401", "student": "Amina Nakato", "amount": 450000, "status": "Paid", "due": "2025-01-15", "term": "Term 1" },
+    { "id": "INV-2402", "student": "James Okello", "amount": 85000, "status": "Partial", "due": "2025-02-01", "term": "Term 1" },
+    { "id": "INV-2403", "student": "Sarah Komuhangi", "amount": 120000, "status": "Paid", "due": "2025-01-20", "term": "Term 1" },
+    { "id": "INV-2404", "student": "Peter Mugisha", "amount": 50000, "status": "Unpaid", "due": "2024-12-01", "term": "Term 1" },
+    { "id": "INV-2405", "student": "Grace Achieng", "amount": 200000, "status": "Unpaid", "due": "2025-03-01", "term": "Term 1" }
+  ]
+}

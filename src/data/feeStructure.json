@@ -1,0 +1,7 @@
+{
+  "items": [
+    { "id": "FS-1", "name": "Tuition — Day", "grade": "S1–S2", "amount": 1200000, "period": "Per year" },
+    { "id": "FS-2", "name": "Tuition — Boarding", "grade": "S3–S4", "amount": 2100000, "period": "Per year" },
+    { "id": "FS-3", "name": "Lab levy", "grade": "All", "amount": 85000, "period": "Per term" }
+  ]
+}

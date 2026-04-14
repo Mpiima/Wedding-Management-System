@@ -1,0 +1,8 @@
+{
+  "items": [
+    { "id": "PAY-9001", "date": "2025-03-18", "student": "Amina Nakato", "method": "Mobile money", "amount": 450000, "reference": "TXN-77821" },
+    { "id": "PAY-9002", "date": "2025-03-17", "student": "James Okello", "method": "Bank", "amount": 40000, "reference": "BK-99201" },
+    { "id": "PAY-9003", "date": "2025-03-16", "student": "Sarah Komuhangi", "method": "Cash", "amount": 120000, "reference": "CSH-44102" },
+    { "id": "PAY-9004", "date": "2025-03-15", "student": "Grace Achieng", "method": "Mobile money", "amount": 100000, "reference": "TXN-66190" }
+  ]
+}

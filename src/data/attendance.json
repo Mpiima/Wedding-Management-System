@@ -1,0 +1,13 @@
+{
+  "items": [
+    { "id": "ATT-01", "date": "2025-03-21", "class": "S3-A", "present": 38, "absent": 2, "rate": "95%" },
+    { "id": "ATT-02", "date": "2025-03-21", "class": "S2-B", "present": 41, "absent": 1, "rate": "98%" },
+    { "id": "ATT-03", "date": "2025-03-20", "class": "S4-C", "present": 36, "absent": 4, "rate": "90%" },
+    { "id": "ATT-04", "date": "2025-03-20", "class": "S1-A", "present": 44, "absent": 0, "rate": "100%" }
+  ],
+  "register": [
+    { "id": "R1", "student": "Amina Nakato", "class": "S3-A", "status": "Present" },
+    { "id": "R2", "student": "Grace Achieng", "class": "S3-A", "status": "Present" },
+    { "id": "R3", "student": "Daniel Ssemwogerere", "class": "S2-A", "status": "Absent" }
+  ]
+}

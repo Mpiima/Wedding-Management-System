@@ -4,36 +4,78 @@
 
 @layer base {
   html {
-    @apply font-sans text-wmis-text antialiased;
+    @apply font-sans text-sc-text antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11', 'ss01';
+    text-rendering: optimizeLegibility;
+    scroll-behavior: smooth;
   }
-  h1, h2, h3 {
-    @apply font-display font-semibold tracking-tight;
+  body {
+    @apply leading-relaxed;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-semibold tracking-tight text-slate-900;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }
 
 @layer components {
+  /* Primary CTA — subtle lift + press (Stripe-like) */
   .btn-primary {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-rose-500 px-5 py-2.5 text-sm font-medium text-white shadow-soft
-           transition-all duration-300 ease-luxury hover:bg-rose-600 hover:shadow-card-hover hover:-translate-y-0.5
-           focus:outline-none focus:ring-2 focus:ring-rose-500/30 focus:ring-offset-2
-           disabled:opacity-60 disabled:pointer-events-none disabled:translate-y-0;
+    @apply relative inline-flex h-10 min-h-[2.5rem] items-center justify-center gap-2 overflow-hidden rounded-xl bg-brand-600 px-5 text-sm font-semibold text-white shadow-soft
+           transition-all duration-200 ease-out
+           hover:-translate-y-px hover:bg-brand-700 hover:shadow-card-hover
+           active:translate-y-0 active:scale-[0.98] active:shadow-soft
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/45 focus-visible:ring-offset-2
+           disabled:pointer-events-none disabled:opacity-50;
   }
-  .btn-gold {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-br from-gold-400 to-gold-600 px-5 py-2.5 text-sm font-medium text-white shadow-md
-           transition-all duration-300 ease-luxury hover:from-gold-300 hover:to-gold-500 hover:shadow-luxury hover:-translate-y-0.5
-           focus:outline-none focus:ring-2 focus:ring-gold-500/30 focus:ring-offset-2;
+  .btn-secondary {
+    @apply inline-flex h-10 min-h-[2.5rem] items-center justify-center gap-2 rounded-xl border border-sc-line bg-white px-5 text-sm font-semibold text-slate-800 shadow-soft
+           transition-all duration-200 ease-out
+           hover:-translate-y-px hover:border-slate-300 hover:bg-slate-50 hover:shadow-card
+           active:translate-y-0 active:scale-[0.99]
+           focus:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/25 focus-visible:ring-offset-2
+           disabled:pointer-events-none disabled:opacity-50;
   }
-  .card-luxury {
-    @apply rounded-2xl border border-rose-100/60 bg-gradient-card bg-white p-6 shadow-card
-           transition-all duration-350 ease-luxury hover:shadow-card-hover hover:border-rose-200/80;
+  .card-surface {
+    @apply rounded-2xl border border-sc-border bg-white/95 p-6 shadow-card backdrop-blur-sm transition-all duration-300 ease-out sm:p-7;
   }
-  .text-balance {
-    text-wrap: balance;
+  .card-surface:hover {
+    @apply border-sc-border-strong shadow-card-hover;
+  }
+  .page-shell {
+    @apply mx-auto w-full max-w-[1400px] space-y-8 lg:space-y-10;
+  }
+  .ui-label {
+    @apply text-2xs font-semibold uppercase tracking-wider text-slate-500;
+  }
+  /* Interactive list row (tables) */
+  .interactive-row {
+    @apply transition-colors duration-150 ease-out;
   }
 }
 
-/* Subtle rose gradient background for main area */
-.bg-wmis-page {
-  background: linear-gradient(180deg, #FFF8F9 0%, #FFF1F2 30%, #FFE4E6 100%);
+@layer utilities {
+  .tap-highlight-none {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Canvas: neutral + SCH PRO 360 brand glow (#1C2D5B / #2CAAE2) */
+.bg-sc-page {
+  background-color: var(--sc-canvas, #f5f6f8);
+  background-image:
+    radial-gradient(ellipse 100% 120% at 100% 0%, rgba(44, 170, 226, 0.09), transparent 55%),
+    radial-gradient(ellipse 80% 100% at 0% 100%, rgba(28, 45, 91, 0.06), transparent 52%),
+    linear-gradient(180deg, #fafbfc 0%, #f3f4f7 100%);
   min-height: 100%;
 }

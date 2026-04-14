@@ -1,79 +1,92 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    './index.html',
-    './src/**/*.{vue,js,ts,jsx,tsx}'
-  ],
+  content: ['./index.html', './src/**/*.{vue,js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      fontSize: {
+        '2xs': ['0.6875rem', { lineHeight: '1rem', letterSpacing: '0.06em' }]
+      },
+      lineHeight: {
+        snug: '1.375',
+        relaxed: '1.625'
+      },
       fontFamily: {
-        display: ['Playfair Display', 'serif'],
-        sans: ['Poppins', 'system-ui', 'sans-serif']
+        display: ['DM Sans', 'system-ui', 'sans-serif'],
+        sans: ['Inter', 'system-ui', 'sans-serif']
       },
       colors: {
-        rose: {
-          DEFAULT: '#E11D48',
-          50: '#FFF1F2',
-          100: '#FFE4E6',
-          200: '#FECDD3',
-          300: '#FDA4AF',
-          400: '#FB7185',
-          500: '#E11D48',
-          600: '#BE123C',
-          700: '#9F1239',
-          800: '#881337',
-          900: '#4C0519'
+        /* Stripe/Linear-inspired semantic tokens */
+        sc: {
+          canvas: '#FAFBFC',
+          elevated: '#FFFFFF',
+          border: 'rgba(15, 23, 42, 0.08)',
+          'border-strong': 'rgba(15, 23, 42, 0.12)',
+          text: '#0F172A',
+          muted: '#64748B',
+          subtle: '#94A3B8',
+          /* Accent #2CAAE2 — links, focus, highlights */
+          accent: '#2CAAE2',
+          'accent-hover': '#2498c9',
+          'accent-muted': 'rgba(44, 170, 226, 0.12)',
+          'accent-ring': 'rgba(44, 170, 226, 0.35)',
+          line: '#E8EAEF',
+          /* Primary #1C2D5B — nav, primary actions */
+          navy: '#1C2D5B',
+          'navy-muted': 'rgba(28, 45, 91, 0.08)'
         },
-        gold: {
-          DEFAULT: '#C9A227',
-          50: '#FDF8E8',
-          100: '#FAF0CC',
-          200: '#F5E099',
-          300: '#EED066',
-          400: '#E5C040',
-          500: '#C9A227',
-          600: '#A8841F',
-          700: '#876618',
-          800: '#664D12',
-          900: '#45340C'
-        },
-        wmis: {
-          primary: '#E11D48',
-          secondary: '#FB7185',
-          accent: '#C9A227',
-          'bg-light': '#FFF8F9',
-          'bg-gradient': 'linear-gradient(135deg, #FFF8F9 0%, #FFF1F2 50%, #FFE4E6 100%)',
-          card: '#FFFFFF',
-          text: '#1F2937'
+        /* SCH PRO 360: navy primary + sky accent */
+        brand: {
+          50: '#e8f7fc',
+          100: '#d1eef8',
+          200: '#a3d9f0',
+          300: '#6ec3e8',
+          400: '#3dade0',
+          500: '#2CAAE2',
+          600: '#1C2D5B',
+          700: '#152447',
+          800: '#101a38',
+          900: '#0a1024'
         }
       },
-      backgroundImage: {
-        'gradient-rose': 'linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 50%, #FECDD3 100%)',
-        'gradient-rose-subtle': 'linear-gradient(180deg, #FFF8F9 0%, #FFF1F2 100%)',
-        'gradient-gold-subtle': 'linear-gradient(135deg, #FDF8E8 0%, #FAF0CC 100%)',
-        'gradient-card': 'linear-gradient(145deg, #ffffff 0%, #fffbfc 100%)',
-        'gradient-hero': 'linear-gradient(135deg, rgba(255,241,242,0.6) 0%, rgba(254,205,211,0.3) 100%)'
-      },
       boxShadow: {
-        'soft': '0 2px 15px -3px rgba(225, 29, 72, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
-        'soft-lg': '0 10px 40px -10px rgba(225, 29, 72, 0.12), 0 4px 20px -2px rgba(0, 0, 0, 0.06)',
-        'card': '0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05)',
-        'card-hover': '0 8px 30px -6px rgba(225, 29, 72, 0.12), 0 4px 15px -4px rgba(0, 0, 0, 0.06)',
-        'luxury': '0 4px 20px -2px rgba(201, 162, 39, 0.15), 0 2px 10px -2px rgba(225, 29, 72, 0.06)',
-        'inner-gold': 'inset 0 1px 0 0 rgba(255,255,255,0.4)'
+        soft: '0 1px 2px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.06)',
+        'soft-lg':
+          '0 4px 6px -1px rgba(15, 23, 42, 0.05), 0 12px 28px -8px rgba(28, 45, 91, 0.1), 0 0 0 1px rgba(15, 23, 42, 0.04)',
+        card: '0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px -2px rgba(15, 23, 42, 0.08)',
+        'card-hover':
+          '0 8px 24px -6px rgba(28, 45, 91, 0.12), 0 4px 12px -4px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(15, 23, 42, 0.04)',
+        'inset-highlight': 'inset 0 1px 0 0 rgba(255, 255, 255, 0.6)',
+        focus: '0 0 0 3px rgba(44, 170, 226, 0.28)',
+        'focus-sm': '0 0 0 2px rgba(44, 170, 226, 0.22)'
       },
       borderRadius: {
-        'xl': '1rem',
-        '2xl': '1.25rem',
-        '3xl': '1.5rem'
+        xl: '0.75rem',
+        '2xl': '1rem',
+        '3xl': '1.25rem'
       },
       transitionDuration: {
-        '250': '250ms',
-        '350': '350ms'
+        250: '250ms',
+        350: '350ms',
+        400: '400ms'
       },
       transitionTimingFunction: {
-        'smooth': 'cubic-bezier(0.4, 0, 0.2, 1)',
-        'luxury': 'cubic-bezier(0.33, 1, 0.68, 1)'
+        smooth: 'cubic-bezier(0.4, 0, 0.2, 1)',
+        'out-expo': 'cubic-bezier(0.16, 1, 0.3, 1)',
+        spring: 'cubic-bezier(0.34, 1.56, 0.64, 1)'
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' }
+        },
+        'fade-up': {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' }
+        }
+      },
+      animation: {
+        'fade-in': 'fade-in 0.35s ease-out forwards',
+        'fade-up': 'fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
       }
     }
   },

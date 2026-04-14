@@ -1,0 +1,12 @@
+{
+  "items": [
+    { "id": "STU-1001", "name": "Amina Nakato", "admissionNumber": "ADM-2019-014", "class": "S3-A", "parentContact": "+256 700 111 222", "status": "Active" },
+    { "id": "STU-1002", "name": "James Okello", "admissionNumber": "ADM-2020-088", "class": "S2-B", "parentContact": "+256 701 333 444", "status": "Active" },
+    { "id": "STU-1003", "name": "Sarah Komuhangi", "admissionNumber": "ADM-2018-032", "class": "S4-C", "parentContact": "+256 702 555 666", "status": "Active" },
+    { "id": "STU-1004", "name": "Peter Mugisha", "admissionNumber": "ADM-2021-201", "class": "S1-A", "parentContact": "+256 703 777 888", "status": "Leave" },
+    { "id": "STU-1005", "name": "Grace Achieng", "admissionNumber": "ADM-2019-067", "class": "S3-A", "parentContact": "+256 704 999 000", "status": "Active" },
+    { "id": "STU-1006", "name": "Daniel Ssemwogerere", "admissionNumber": "ADM-2022-310", "class": "S2-A", "parentContact": "+256 705 121 314", "status": "Active" },
+    { "id": "STU-1007", "name": "Mary Nambi", "admissionNumber": "ADM-2020-145", "class": "S4-A", "parentContact": "+256 706 151 617", "status": "Active" },
+    { "id": "STU-1008", "name": "Robert Kato", "admissionNumber": "ADM-2021-289", "class": "S1-B", "parentContact": "+256 707 181 920", "status": "Suspended" }
+  ]
+}

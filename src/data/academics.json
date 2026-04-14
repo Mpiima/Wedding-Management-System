@@ -1,0 +1,17 @@
+{
+  "classes": [
+    { "id": "CL-1", "name": "S1-A", "students": 42, "teacher": "Ms. Nalubega" },
+    { "id": "CL-2", "name": "S2-B", "students": 38, "teacher": "Mr. Ochieng" },
+    { "id": "CL-3", "name": "S3-A", "students": 40, "teacher": "Ms. Akello" }
+  ],
+  "subjects": [
+    { "id": "SUB-1", "name": "Mathematics", "code": "MATH", "classes": 12 },
+    { "id": "SUB-2", "name": "English", "code": "ENG", "classes": 12 },
+    { "id": "SUB-3", "name": "Biology", "code": "BIO", "classes": 8 }
+  ],
+  "teachers": [
+    { "id": "TCH-1", "name": "Ms. Nalubega", "role": "Senior teacher", "subjects": "Math, Physics" },
+    { "id": "TCH-2", "name": "Mr. Ochieng", "role": "HOD Sciences", "subjects": "Biology, Chemistry" },
+    { "id": "TCH-3", "name": "Ms. Akello", "role": "Class teacher", "subjects": "English" }
+  ]
+}

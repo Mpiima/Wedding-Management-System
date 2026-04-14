@@ -1,112 +1,270 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-wmis-page p-4">
-    <div class="w-full max-w-md">
-      <div class="text-center mb-8">
-        <router-link to="/" class="inline-flex items-center gap-2 text-wmis-text hover:opacity-90 transition">
-          <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-rose-500 to-rose-600 text-white text-xl font-display font-semibold shadow-soft">♥</span>
-          <span class="font-display text-2xl font-semibold tracking-tight">WMIS</span>
-        </router-link>
-        <p class="mt-2 text-sm text-gray-500">Wedding Management Information System</p>
-      </div>
+  <div class="flex min-h-screen items-center justify-center bg-sc-page p-6 sm:p-8">
+    <div class="w-full max-w-[26rem]">
+      <div class="card-surface px-8 py-9 sm:px-9">
+        <div class="mb-6 flex flex-col items-center">
+          <AppLogo size="lg" />
+          <h1 class="mt-4 text-center font-display text-lg font-semibold tracking-tight text-brand-700">Sign in</h1>
+        </div>
+        <!-- <p class="mb-8 mt-2 text-center text-sm leading-relaxed text-slate-500">
+          Staff: use your school email. Students: use the portal username (e.g. <span class="font-mono">ADM</span> + admission
+          number) and password from your school.
+        </p> -->
 
-      <div class="card-luxury p-8">
-        <h1 class="font-display text-xl font-semibold text-wmis-text text-center mb-1">Welcome back</h1>
-        <p class="text-sm text-gray-500 text-center mb-6">Sign in to manage your wedding</p>
-
-        <form class="space-y-5" @submit.prevent="handleSubmit">
+        <form class="space-y-6" @submit.prevent="doLogin">
           <FormInput
-            v-model="email"
-            label="Email"
-            type="email"
-            placeholder="you@example.com"
+            v-model="form.email"
+            label="username"
+            type="text"
+            placeholder="you@school.org or ADM12345"
             required
             :error="errors.email"
           />
-          <div class="space-y-1">
-            <label class="block text-sm font-medium text-gray-700">
-              Password <span class="text-rose-500">*</span>
+
+          <div class="space-y-2">
+            <label class="block text-sm font-medium leading-snug text-slate-700">
+              Password <span class="text-brand-600">*</span>
             </label>
             <input
-              v-model="password"
-              :type="showPassword ? 'text' : 'password'"
+              v-model="form.password"
+              :type="show ? 'text' : 'password'"
               placeholder="••••••••"
               required
-              class="block w-full rounded-xl border border-rose-100 bg-rose-50/20 px-4 py-2.5 text-sm text-wmis-text placeholder-gray-500 transition-all duration-200 focus:border-rose-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+              class="block h-11 w-full rounded-xl border border-sc-line bg-white px-3.5 text-sm text-slate-900 shadow-sm transition-all duration-200 ease-out focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-500/15"
             />
-            <div class="flex items-center justify-between mt-1">
-              <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-                <input v-model="showPassword" type="checkbox" class="rounded border-rose-200 text-rose-500 focus:ring-rose-500/20" />
-                Show password
-              </label>
-              <button type="button" class="text-sm text-rose-600 hover:text-rose-700 font-medium">Forgot password?</button>
-            </div>
-            <p v-if="errors.password" class="text-xs text-rose-500">{{ errors.password }}</p>
+            <label class="mt-2 flex cursor-pointer items-center gap-2 text-sm text-slate-600">
+              <input v-model="show" type="checkbox" class="rounded border-slate-300 text-brand-600 focus:ring-brand-500/30" />
+              Show password
+            </label>
+            <p v-if="errors.password" class="text-xs text-rose-600">{{ errors.password }}</p>
           </div>
-          <label class="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-            <input v-model="remember" type="checkbox" class="rounded border-rose-200 text-rose-500 focus:ring-rose-500/20" />
-            Remember me
-          </label>
-          <p v-if="displayError" class="text-sm text-rose-600 bg-rose-50 rounded-xl px-4 py-2">{{ displayError }}</p>
-          <button
-            type="submit"
-            class="btn-primary w-full py-3"
-            :disabled="loading"
-          >
-            {{ loading ? 'Signing in…' : 'Sign in' }}
+          <p v-if="errorMessage" class="rounded-xl bg-rose-50 px-4 py-2 text-sm text-rose-700">{{ errorMessage }}</p>
+          <button type="submit" class="btn-primary mt-2 w-full !py-3" :disabled="buttonLoader">
+            {{ buttonLoader ? 'Signing in…' : 'Sign in' }}
           </button>
         </form>
 
-        <p class="mt-6 text-center text-sm text-gray-500">
-          Don't have an account?
-          <button type="button" class="text-rose-600 hover:text-rose-700 font-medium ml-1">Request access</button>
-        </p>
+        <div class="mt-6 border-t border-sc-border pt-5">
+          <p class="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">Demo Credentials</p>
+          <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            <button
+              type="button"
+              class="rounded-xl border border-sc-line bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              :disabled="buttonLoader"
+              @click="loginAsDemo('superAdmin')"
+            >
+              Super Admin Demo
+            </button>
+            <!-- <button
+              type="button"
+              class="rounded-xl border border-sc-line bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              :disabled="buttonLoader"
+              @click="loginAsDemo('admin')"
+            >
+              Admin Demo
+            </button>
+            <button
+              type="button"
+              class="rounded-xl border border-sc-line bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              :disabled="buttonLoader"
+              @click="loginAsDemo('student')"
+            >
+              Student Portal Demo
+            </button>
+            <button
+              type="button"
+              class="rounded-xl border border-sc-line bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50"
+              :disabled="buttonLoader"
+              @click="loginAsDemo('parent')"
+            >
+              Parent Portal Demo
+            </button> -->
+          </div>
+        </div>
       </div>
 
-      <p class="mt-6 text-center text-xs text-gray-400">© WMIS — Wedding Management</p>
+      <p class="mt-10 text-center text-xs leading-relaxed text-slate-400">© SCH PRO 360 — All rights reserved</p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { reactive, ref, watch } from 'vue'
+import { storeToRefs } from 'pinia'
+import { useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
-import FormInput from '@/components/FormInput.vue'
+import useNotificationStore from '@/stores/notificationStore'
+import FormInput from '@/components/ui/FormInput.vue'
+import AppLogo from '@/components/common/AppLogo.vue'
+import router from '@/router/router.js'
 
-const router = useRouter()
-const route = useRoute()
+const notificationStore = useNotificationStore()
 const authStore = useAuthStore()
+const { errorMessage: authErrorMessage } = storeToRefs(authStore)
 
-const email = ref('')
-const password = ref('')
-const remember = ref(false)
-const showPassword = ref(false)
-const loading = ref(false)
+const route = useRoute()
+
+const errorMessage = ref(null)
+const buttonLoader = ref(false)
+const show = ref(false)
+const scope = ref(null)
+
+const form = reactive({
+  email: null,
+  password: null
+})
+
 const errors = reactive({ email: '', password: '' })
 
-const displayError = computed(() => authStore.errorMessage)
+/**
+ * Optional: mirror entityStore.getConfigureLanding() + landPageResponse watch:
+ * set title / logoUrl from API, then persist landingPageTitle + logo to localStorage.
+ */
 
-function handleSubmit() {
-  authStore.clearError()
+watch(
+  () => authStore.loginResponse,
+  async (data) => {
+    if (!data || data.error) return
+
+    const inner = data.data || {}
+    if (inner.campuses != null) {
+      localStorage.setItem('Campus', JSON.stringify(inner.campuses))
+    }
+    if (inner.Schools != null) {
+      const school = JSON.stringify(inner.Schools)
+      localStorage.setItem('SchoolInfo', school)
+      localStorage.setItem('currentSchoolInfo', school)
+    }
+
+    scope.value = Array.isArray(inner.scopes) ? inner.scopes : []
+
+    await authStore.userProfile()
+
+    const user = authStore.profile
+    if (!user) {
+      buttonLoader.value = false
+      return
+    }
+
+    const r = router.resolve({
+      path: resolvePostLoginPath(user, scope.value)
+    })
+    window.location.assign(r.href)
+    notificationStore.successToast('Success', 'Login successfully')
+    buttonLoader.value = false
+  }
+)
+
+function resolvePostLoginPath(user, scopes) {
+  const redirectFromQuery = typeof route.query.redirect === 'string' ? route.query.redirect : null
+  if (redirectFromQuery) return redirectFromQuery
+
+  const t = String(user?.type || '')
+  const sc = Array.isArray(scopes) ? scopes : []
+  const role = String(user?.role || '').toLowerCase()
+
+  if (Number(user?.tenant_id) === 0 || role.includes('super')) {
+    return '/super-admin/dashboard'
+  }
+  if (user?.setup_completed === false) {
+    return '/school/setup'
+  }
+  if (t === 'Student' || role.includes('student')) {
+    return '/portal/dashboard'
+  }
+  if (role.includes('parent')) {
+    return '/parent/dashboard'
+  }
+  if (t === 'User' && sc.length === 0) {
+    return '/dashboard'
+  }
+  if (sc.length > 0) {
+    localStorage.setItem('schoolSelectStatus', 'NO')
+    return '/academics/teachers'
+  }
+  return '/dashboard'
+}
+
+watch(
+  () => authErrorMessage.value,
+  async (data) => {
+    if (data) {
+      const msg =
+        typeof data === 'string'
+          ? data
+          : data?.message ?? data?.error ?? 'Login failed'
+      errorMessage.value = msg
+      buttonLoader.value = false
+      notificationStore.errorToast('Error', String(msg))
+    }
+  }
+)
+
+function doLogin() {
   errors.email = ''
   errors.password = ''
-  if (!email.value.trim()) {
-    errors.email = 'Email is required.'
+  errorMessage.value = null
+  authStore.clearError()
+
+  if (!String(form.email || '').trim()) {
+    errors.email = 'Email or portal username is required.'
+    notificationStore.warningToast('Validation', 'Email or portal username is required.')
     return
   }
-  if (!password.value) {
+  if (!form.password) {
     errors.password = 'Password is required.'
+    notificationStore.warningToast('Validation', 'Password is required.')
     return
   }
-  loading.value = true
-  authStore.userLogin({ email: email.value.trim(), password: password.value }).then(() => {
-    loading.value = false
-    if (authStore.loginResponse && !authStore.errorMessage) {
-      const redirect = route.query.redirect || '/'
-      router.replace(redirect)
+
+  buttonLoader.value = true
+  authStore.userLogin({ email: form.email, password: form.password })
+}
+
+async function loginAsDemo(type) {
+  const map = {
+    superAdmin: {
+      email: 'superadmin@schpro360.local',
+      password: 'demo123',
+      tenantId: 0,
+      redirect: '/super-admin/dashboard'
+    },
+    admin: {
+      email: 'admin@schpro360.local',
+      password: 'demo123',
+      tenantId: 1,
+      redirect: '/dashboard'
+    },
+    student: {
+      email: 'student@schpro360.local',
+      password: 'demo123',
+      tenantId: 1,
+      redirect: '/portal/dashboard'
+    },
+    parent: {
+      email: 'parent@schpro360.local',
+      password: 'demo123',
+      tenantId: 1,
+      redirect: '/parent/dashboard'
     }
-  }).catch(() => {
-    loading.value = false
-  })
+  }
+  const selected = map[type]
+  if (!selected) return
+
+  form.email = selected.email
+  form.password = selected.password
+
+  errorMessage.value = null
+  authStore.clearError()
+  buttonLoader.value = true
+
+  await authStore.userLogin({ email: selected.email, password: selected.password })
+
+  if (authStore.errorMessage) {
+    buttonLoader.value = false
+    return
+  }
+
+  /** Successful API login: loginResponse watcher performs navigation. */
 }
 </script>

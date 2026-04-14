@@ -1,36 +1,96 @@
-import axios from 'axios'
+/**
+ * API base URL for future backend integration (avatars, uploads, etc.).
+ */
+export const baseURL = (import.meta.env.VITE_APP_BASE_URL || '').toString().replace(/\/$/, '')
 
-const baseURL = (import.meta.env.VITE_APP_BASE_URL || 'http://localhost/templates/wmis/api').toString().trim()
+function buildUrl(path = '') {
+  const cleanedPath = String(path || '').replace(/^\/+/, '')
+  if (!baseURL) return `/${cleanedPath}`
+  return `${baseURL}/${cleanedPath}`
+}
 
-const api = axios.create({
-  baseURL,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json'
-  },
-  withCredentials: false
-})
-
-// Attach token to every request if present
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
-
-// Optional: handle 401 globally (e.g. clear token and redirect to login)
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    if (error.response && error.response.status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('userProfile')
-      // Router push to login can be done in the app when using the store
+async function request(method, path, payload) {
+  const options = {
+    method,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json'
     }
-    return Promise.reject(error)
   }
-)
+
+  const token = localStorage.getItem('token') || localStorage.getItem('sc360_token')
+  if (token) {
+    options.headers.Authorization = `Bearer ${token}`
+  }
+
+  if (payload !== undefined) {
+    options.body = JSON.stringify(payload)
+  }
+
+  const response = await fetch(buildUrl(path), options)
+  let data = null
+  try {
+    data = await response.json()
+  } catch {
+    data = null
+  }
+
+  if (!response.ok) {
+    const err = new Error('Request failed')
+    err.response = {
+      status: response.status,
+      data: data || { message: response.statusText || 'Request failed' }
+    }
+    throw err
+  }
+
+  return { data }
+}
+
+async function requestForm(method, path, formData) {
+  const options = {
+    method,
+    credentials: 'include',
+    body: formData
+  }
+  const token = localStorage.getItem('token') || localStorage.getItem('sc360_token')
+  if (token) {
+    options.headers = { Authorization: `Bearer ${token}` }
+  }
+  const response = await fetch(buildUrl(path), options)
+  let data = null
+  try {
+    data = await response.json()
+  } catch {
+    data = null
+  }
+  if (!response.ok) {
+    const err = new Error('Request failed')
+    err.response = { status: response.status, data: data || { message: response.statusText } }
+    throw err
+  }
+  return { data }
+}
+
+const api = {
+  get(path) {
+    return request('GET', path)
+  },
+  post(path, payload) {
+    return request('POST', path, payload)
+  },
+  put(path, payload) {
+    return request('PUT', path, payload)
+  },
+  patch(path, payload) {
+    return request('PATCH', path, payload)
+  },
+  delete(path) {
+    return request('DELETE', path)
+  },
+  postForm(path, formData) {
+    return requestForm('POST', path, formData)
+  }
+}
 
 export default api

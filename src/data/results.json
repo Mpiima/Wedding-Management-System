@@ -1,0 +1,28 @@
+{
+  "reports": [
+    {
+      "studentId": "STU-1001",
+      "name": "Amina Nakato",
+      "class": "S3-A",
+      "term": "Term 1 2025",
+      "gpa": "4.2",
+      "grades": [
+        { "subject": "Mathematics", "score": 82, "grade": "A" },
+        { "subject": "English", "score": 76, "grade": "B+" },
+        { "subject": "Biology", "score": 71, "grade": "B" }
+      ]
+    },
+    {
+      "studentId": "STU-1002",
+      "name": "James Okello",
+      "class": "S2-B",
+      "term": "Term 1 2025",
+      "gpa": "3.8",
+      "grades": [
+        { "subject": "Mathematics", "score": 74, "grade": "B" },
+        { "subject": "English", "score": 80, "grade": "A-" },
+        { "subject": "Biology", "score": 69, "grade": "B-" }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "items": [
+    { "id": "EX-501", "name": "Mid-term — Mathematics", "grade": "S3", "date": "2025-03-28", "status": "Scheduled" },
+    { "id": "EX-502", "name": "Mid-term — English", "grade": "S3", "date": "2025-03-29", "status": "Scheduled" },
+    { "id": "EX-503", "name": "Practical — Biology", "grade": "S4", "date": "2025-04-02", "status": "Draft" },
+    { "id": "EX-504", "name": "Quiz — History", "grade": "S2", "date": "2025-03-25", "status": "Completed" }
+  ]
+}

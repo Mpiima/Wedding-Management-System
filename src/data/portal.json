@@ -1,0 +1,18 @@
+{
+  "dashboard": {
+    "greeting": "Welcome back",
+    "summary": [
+      { "label": "Next lesson", "value": "Literacy I — 10:00" },
+      { "label": "Fees balance", "value": "UGX 0" },
+      { "label": "Attendance", "value": "98% this month" }
+    ]
+  },
+  "timetable": [
+    { "day": "Monday", "slots": [{ "time": "08:00", "subject": "Numeracy", "room": "P5-A" }, { "time": "10:00", "subject": "Literacy I", "room": "P5-A" }] },
+    { "day": "Tuesday", "slots": [{ "time": "08:00", "subject": "Integrated Science", "room": "P5-A" }] }
+  ],
+  "fees": [
+    { "id": "F1", "description": "Term 1 tuition", "amount": 450000, "status": "Paid" },
+    { "id": "F2", "description": "Sports levy", "amount": 50000, "status": "Due" }
+  ]
+}
